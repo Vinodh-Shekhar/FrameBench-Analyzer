@@ -79,6 +79,10 @@ Frame spikes indicate potential stutter events.
 
 ---
 
+## Dashboard Demo
+
+![NeuralDriver QA Inspector](screenshots/dashboard-demo.png)
+
 ## Future Improvements
 
 Planned upgrades include:
