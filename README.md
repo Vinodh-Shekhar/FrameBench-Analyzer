@@ -4,6 +4,13 @@ AI-assisted GPU driver validation dashboard for detecting frame pacing instabili
 
 This prototype simulates a GPU QA validation tool similar to those used in graphics driver testing pipelines.
 
+## Dashboard Demo
+
+![NeuralDriver QA Inspector](screenshots/dashboard-demo.png)
+
+## Live Demo
+
+https://vinodh-neuraldriver-analyzer.bolt.host
 ---
 
 ## Overview
@@ -78,10 +85,6 @@ Frame Time Distribution Visualization
 Frame spikes indicate potential stutter events.
 
 ---
-
-## Dashboard Demo
-
-![NeuralDriver QA Inspector](screenshots/dashboard-demo.png)
 
 ## Future Improvements
 
