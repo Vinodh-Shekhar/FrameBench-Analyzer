@@ -52,6 +52,14 @@ Stutter Detection
 
 Driver Stability Verdict
 
+Average FPS
+
+1% Low FPS
+
+0.1% Low FPS
+
+Frame Stability Score
+
 ---
 
 ## Example Workflow
