@@ -4,6 +4,7 @@ import DriverUploadPanel from './components/DriverUploadPanel';
 import GpuStatusWidget from './components/GpuStatusWidget';
 import MetricsPanel from './components/MetricsPanel';
 import { SingleFrameTimeChart, ComparisonChart } from './components/FrameTimeChart';
+import FrameTimeDistribution from './components/FrameTimeDistribution';
 import QAAnalysisPanel from './components/QAAnalysisPanel';
 import RegressionPanel from './components/RegressionPanel';
 import TelemetryWidgets from './components/TelemetryWidgets';
@@ -214,6 +215,15 @@ export default function App() {
               {datasetA && datasetB && (
                 <ComparisonChart dataA={datasetA.frames} dataB={datasetB.frames} />
               )}
+
+              <div className="grid gap-4 lg:grid-cols-2">
+                {datasetA && (
+                  <FrameTimeDistribution driverKey="A" data={datasetA.frames} />
+                )}
+                {datasetB && (
+                  <FrameTimeDistribution driverKey="B" data={datasetB.frames} />
+                )}
+              </div>
             </div>
           )}
 
