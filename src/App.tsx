@@ -272,7 +272,7 @@ export default function App() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="font-mono text-[10px] text-nvidia-muted">
-                  NeuralDriver QA Inspector v1.0.0
+                  NeuralDriver Performance Analyzer v1.0.0
                 </span>
                 <span className="text-[10px] text-gray-600">
                   Prototype by Vinodh Shekhar

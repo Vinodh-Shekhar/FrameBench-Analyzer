@@ -6,7 +6,7 @@ This prototype simulates a GPU QA validation tool similar to those used in graph
 
 ## Dashboard Demo
 
-![NeuralDriver QA Inspector](screenshots/dashboard-demo.png)
+![NeuralDriver Performance Analyzer](screenshots/dashboard-demo.png)
 
 ## Live Demo
 

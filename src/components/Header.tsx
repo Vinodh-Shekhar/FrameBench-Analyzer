@@ -17,7 +17,7 @@ export default function Header() {
             <div>
               <h1 className="text-xl font-bold tracking-tight text-nvidia-text sm:text-2xl">
                 NeuralDriver{' '}
-                <span className="text-nvidia-green">QA Inspector</span>
+                <span className="text-nvidia-green">Performance Analyzer</span>
               </h1>
               <p className="mt-0.5 text-xs tracking-wide text-nvidia-muted sm:text-sm">
                 AI-Assisted GPU Driver Validation Dashboard
