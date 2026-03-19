@@ -13,11 +13,28 @@ const FRAME_TIME_HEADERS = [
 export const MAX_RENDER_FRAMES = 25_000;
 const YIELD_INTERVAL = 5_000;
 
-const FPS_HIST_BUCKETS = 200_000;
+const FPS_HIST_BUCKETS = 2_000;
 const FPS_HIST_MAX = 2000;
 const FPS_BUCKET_WIDTH = FPS_HIST_MAX / FPS_HIST_BUCKETS;
 
-const FILE_SIZE_STREAM_THRESHOLD = 10 * 1024 * 1024;
+const FILE_SIZE_STREAM_THRESHOLD = 2 * 1024 * 1024;
+
+export const MAX_FILE_SIZE = 200 * 1024 * 1024;
+
+function extractNthColumn(line: string, colIndex: number): string {
+  let col = 0;
+  let start = 0;
+  for (let i = 0; i <= line.length; i++) {
+    if (i === line.length || line.charCodeAt(i) === 44) {
+      if (col === colIndex) {
+        return line.slice(start, i).trim();
+      }
+      col++;
+      start = i + 1;
+    }
+  }
+  return '';
+}
 
 function detectFrameViewMetadata(
   headers: string[],
@@ -59,16 +76,48 @@ export interface ParseResult {
 
 export type ProgressCallback = (framesProcessed: number, bytesProcessed: number, totalBytes: number) => void;
 
+function parseInWorker(file: File, label: string, onProgress?: ProgressCallback): Promise<ParseResult> {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(new URL('./csvParserWorker.ts', import.meta.url), { type: 'module' });
+    worker.onmessage = (e: MessageEvent) => {
+      const msg = e.data;
+      if (msg.type === 'progress') {
+        onProgress?.(msg.frames, msg.bytes, msg.total);
+      } else if (msg.type === 'result') {
+        const { dataset, metrics, analysis } = msg;
+        resolve({ dataset, metrics, analysis });
+        worker.terminate();
+      } else if (msg.type === 'error') {
+        reject(new Error(msg.message));
+        worker.terminate();
+      }
+    };
+    worker.onerror = (err) => {
+      reject(new Error(err.message || 'Worker failed'));
+      worker.terminate();
+    };
+    worker.postMessage({ type: 'parse', file, label });
+  });
+}
+
 export async function parseCSVFile(
   file: File,
   label: string,
   onProgress?: ProgressCallback
 ): Promise<ParseResult> {
-  if (file.size > FILE_SIZE_STREAM_THRESHOLD) {
-    return parseCSVFileStreaming(file, label, onProgress);
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error(`File too large (${(file.size / 1024 / 1024).toFixed(0)}MB). Maximum supported size is ${MAX_FILE_SIZE / 1024 / 1024}MB.`);
   }
-  const text = await readFileAsText(file);
-  return parseCSVText(text, label, file.name, onProgress ? (frames) => onProgress(frames, file.size, file.size) : undefined);
+
+  try {
+    return await parseInWorker(file, label, onProgress);
+  } catch {
+    if (file.size > FILE_SIZE_STREAM_THRESHOLD) {
+      return parseCSVFileStreaming(file, label, onProgress);
+    }
+    const text = await readFileAsText(file);
+    return parseCSVText(text, label, file.name, onProgress ? (frames) => onProgress(frames, file.size, file.size) : undefined);
+  }
 }
 
 async function parseCSVFileStreaming(
@@ -95,12 +144,9 @@ async function parseCSVFileStreaming(
   let highCount = 0;
   let medCount = 0;
 
-  // Welford's online algorithm state
   let wMean = 0;
   let wM2 = 0;
 
-  // Reservoir-style evenly-spaced frame sampling
-  // We collect every Nth frame where N is adaptive based on running count
   const sampledFrameTimes: number[] = [];
   let sampleStep = 1;
   let nextSampleAt = 1;
@@ -122,21 +168,20 @@ async function parseCSVFileStreaming(
       return;
     }
 
-    const cols = line.split(',');
-    const raw = (cols[frameTimeIndex] ?? '').trim();
-    if (raw === '' || raw.toUpperCase() === 'NA') return;
-
-    const frameTime = parseFloat(raw);
-    if (isNaN(frameTime) || frameTime <= 0) return;
-
     if (!firstDataRowParsed) {
+      const cols = line.split(',');
       metadata = detectFrameViewMetadata(headers, cols);
       firstDataRowParsed = true;
     }
 
+    const raw = extractNthColumn(line, frameTimeIndex);
+    if (raw === '' || raw === 'NA' || raw === 'na') return;
+
+    const frameTime = parseFloat(raw);
+    if (isNaN(frameTime) || frameTime <= 0) return;
+
     n++;
 
-    // Welford's online mean + variance
     const delta = frameTime - wMean;
     wMean += delta / n;
     const delta2 = frameTime - wMean;
@@ -149,11 +194,9 @@ async function parseCSVFileStreaming(
     const bucketIdx = Math.min(Math.floor(fps / FPS_BUCKET_WIDTH), FPS_HIST_BUCKETS - 1);
     fpsHistogram[bucketIdx]++;
 
-    // Evenly-spaced sampling: keep MAX_RENDER_FRAMES samples
     if (n === nextSampleAt) {
       sampledFrameTimes.push(frameTime);
       if (sampledFrameTimes.length >= MAX_RENDER_FRAMES) {
-        // Compact: keep every other sample and double the step
         for (let i = 0; i < sampledFrameTimes.length / 2; i++) {
           sampledFrameTimes[i] = sampledFrameTimes[i * 2];
         }
@@ -190,8 +233,6 @@ async function parseCSVFileStreaming(
   const variance = n > 1 ? wM2 / n : 0;
   const stdDev = Math.sqrt(Math.max(0, variance));
 
-  // Compute deviation-based metrics from the sampled frames (close approximation)
-  // and scale to total frame count
   for (const frameTime of sampledFrameTimes) {
     deviationSum += Math.abs(frameTime - avgFt) / avgFt;
     if (frameTime > avgFt * 1.5) stutterCount++;
@@ -202,7 +243,6 @@ async function parseCSVFileStreaming(
     }
   }
 
-  // Scale counts from sample to total population
   const sampleSize = sampledFrameTimes.length;
   if (sampleSize > 0 && sampleSize < n) {
     const scaleFactor = n / sampleSize;
@@ -273,11 +313,9 @@ export async function parseCSVText(
   let highCount = 0;
   let medCount = 0;
 
-  // Welford's online algorithm
   let wMean = 0;
   let wM2 = 0;
 
-  // Evenly-spaced reservoir sampling
   const sampledFrameTimes: number[] = [];
   let sampleStep = 1;
   let nextSampleAt = 1;
@@ -295,16 +333,14 @@ export async function parseCSVText(
 
     if (line === '') continue;
 
-    const cols = line.split(',');
-    const raw = (cols[frameTimeIndex] ?? '').trim();
-    if (raw === '' || raw.toUpperCase() === 'NA') continue;
+    const raw = extractNthColumn(line, frameTimeIndex);
+    if (raw === '' || raw === 'NA' || raw === 'na') continue;
 
     const frameTime = parseFloat(raw);
     if (isNaN(frameTime) || frameTime <= 0) continue;
 
     n++;
 
-    // Welford's online mean + variance
     const delta = frameTime - wMean;
     wMean += delta / n;
     const delta2 = frameTime - wMean;
@@ -317,7 +353,6 @@ export async function parseCSVText(
     const bucketIdx = Math.min(Math.floor(fps / FPS_BUCKET_WIDTH), FPS_HIST_BUCKETS - 1);
     fpsHistogram[bucketIdx]++;
 
-    // Evenly-spaced sampling
     if (n === nextSampleAt) {
       sampledFrameTimes.push(frameTime);
       if (sampledFrameTimes.length >= MAX_RENDER_FRAMES) {
@@ -345,7 +380,6 @@ export async function parseCSVText(
   const variance = n > 1 ? wM2 / n : 0;
   const stdDev = Math.sqrt(Math.max(0, variance));
 
-  // Compute deviation-based metrics from sampled frames
   for (const frameTime of sampledFrameTimes) {
     deviationSum += Math.abs(frameTime - avgFt) / avgFt;
     if (frameTime > avgFt * 1.5) stutterCount++;
@@ -356,7 +390,6 @@ export async function parseCSVText(
     }
   }
 
-  // Scale from sample to population
   const sampleSize = sampledFrameTimes.length;
   if (sampleSize > 0 && sampleSize < n) {
     const scaleFactor = n / sampleSize;

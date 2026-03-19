@@ -1,6 +1,7 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Upload, FileText, X, CheckCircle2, AlertCircle, Cpu, Monitor } from 'lucide-react';
 import type { DriverDataset, UploadStatus } from '../types/telemetry';
+import { MAX_FILE_SIZE } from '../lib/csvParser';
 
 interface Props {
   label: string;
@@ -22,16 +23,29 @@ export default function DriverUploadPanel({
   onClear,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [sizeError, setSizeError] = useState<string | null>(null);
+
+  const validateAndSelect = useCallback(
+    (file: File) => {
+      setSizeError(null);
+      if (file.size > MAX_FILE_SIZE) {
+        setSizeError(`File is ${(file.size / 1024 / 1024).toFixed(0)}MB — max ${MAX_FILE_SIZE / 1024 / 1024}MB`);
+        return;
+      }
+      onFileSelect(file);
+    },
+    [onFileSelect]
+  );
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       const file = e.dataTransfer.files[0];
       if (file && file.name.endsWith('.csv')) {
-        onFileSelect(file);
+        validateAndSelect(file);
       }
     },
-    [onFileSelect]
+    [validateAndSelect]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -132,7 +146,7 @@ export default function DriverUploadPanel({
           onDragOver={handleDragOver}
           onClick={() => status !== 'processing' && status !== 'uploading' && inputRef.current?.click()}
           className={`flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed px-4 py-6 transition-all ${
-            status === 'error'
+            status === 'error' || sizeError
               ? 'border-nvidia-danger/50 bg-nvidia-danger/5'
               : status === 'processing' || status === 'uploading'
               ? 'cursor-default border-nvidia-border bg-nvidia-bg/30'
@@ -146,7 +160,7 @@ export default function DriverUploadPanel({
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) onFileSelect(file);
+              if (file) validateAndSelect(file);
             }}
           />
           {status === 'processing' || status === 'uploading' ? (
@@ -174,10 +188,12 @@ export default function DriverUploadPanel({
                 </div>
               )}
             </div>
-          ) : status === 'error' ? (
+          ) : status === 'error' || sizeError ? (
             <>
               <AlertCircle className="mb-2 h-6 w-6 text-nvidia-danger" />
-              <span className="font-mono text-xs text-nvidia-danger">Invalid CSV format</span>
+              <span className="font-mono text-xs text-nvidia-danger">
+                {sizeError ?? 'Invalid CSV format'}
+              </span>
               <span className="mt-1 font-mono text-[10px] text-nvidia-muted">Click to retry</span>
             </>
           ) : (

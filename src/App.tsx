@@ -103,24 +103,23 @@ export default function App() {
         if (currentSessionId) {
           const DB_FRAME_CAP = 10_000;
           const batchSize = 500;
-          const framesToStore = dataset.frames.length > DB_FRAME_CAP
-            ? (() => {
-                const step = dataset.frames.length / DB_FRAME_CAP;
-                return Array.from({ length: DB_FRAME_CAP }, (_, i) =>
-                  dataset.frames[Math.floor(i * step)]
-                );
-              })()
-            : dataset.frames;
+          const totalFrames = dataset.frames.length;
+          const step = totalFrames > DB_FRAME_CAP ? totalFrames / DB_FRAME_CAP : 1;
+          const count = Math.min(totalFrames, DB_FRAME_CAP);
 
-          const rows = framesToStore.map((f) => ({
-            session_id: currentSessionId,
-            driver_label: driver,
-            frame_number: f.frame,
-            frame_time: f.frameTime,
-          }));
-
-          for (let i = 0; i < rows.length; i += batchSize) {
-            await supabase.from('frame_data').insert(rows.slice(i, i + batchSize));
+          for (let batchStart = 0; batchStart < count; batchStart += batchSize) {
+            const batchEnd = Math.min(batchStart + batchSize, count);
+            const batch = [];
+            for (let i = batchStart; i < batchEnd; i++) {
+              const f = dataset.frames[Math.floor(i * step)];
+              batch.push({
+                session_id: currentSessionId,
+                driver_label: driver,
+                frame_number: f.frame,
+                frame_time: f.frameTime,
+              });
+            }
+            await supabase.from('frame_data').insert(batch);
           }
         }
 
