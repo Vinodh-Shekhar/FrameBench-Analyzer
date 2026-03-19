@@ -10,14 +10,14 @@ const FRAME_TIME_HEADERS = [
   'msbetweendisplaychange',
 ];
 
-export const MAX_RENDER_FRAMES = 100_000;
-const YIELD_INTERVAL = 10_000;
+export const MAX_RENDER_FRAMES = 25_000;
+const YIELD_INTERVAL = 5_000;
 
 const FPS_HIST_BUCKETS = 200_000;
 const FPS_HIST_MAX = 2000;
 const FPS_BUCKET_WIDTH = FPS_HIST_MAX / FPS_HIST_BUCKETS;
 
-const FILE_SIZE_STREAM_THRESHOLD = 200 * 1024 * 1024;
+const FILE_SIZE_STREAM_THRESHOLD = 10 * 1024 * 1024;
 
 function detectFrameViewMetadata(
   headers: string[],
@@ -85,12 +85,9 @@ async function parseCSVFileStreaming(
   let metadata: FrameViewMetadata | undefined;
   let firstDataRowParsed = false;
 
-  const frames: FrameDataPoint[] = [];
   const fpsHistogram = new Int32Array(FPS_HIST_BUCKETS);
 
   let n = 0;
-  let sum = 0;
-  let sumSq = 0;
   let minFt = Infinity;
   let maxFt = -Infinity;
   let stutterCount = 0;
@@ -98,11 +95,21 @@ async function parseCSVFileStreaming(
   let highCount = 0;
   let medCount = 0;
 
+  // Welford's online algorithm state
+  let wMean = 0;
+  let wM2 = 0;
+
+  // Reservoir-style evenly-spaced frame sampling
+  // We collect every Nth frame where N is adaptive based on running count
+  const sampledFrameTimes: number[] = [];
+  let sampleStep = 1;
+  let nextSampleAt = 1;
+
   let leftover = '';
   let bytesRead = 0;
   let yieldCounter = 0;
 
-  const processLine = (line: string, avgFt?: number, stdDev?: number) => {
+  const processLine = (line: string) => {
     if (line === '') return;
 
     if (headerLine === null) {
@@ -127,38 +134,33 @@ async function parseCSVFileStreaming(
       firstDataRowParsed = true;
     }
 
-    if (avgFt === undefined) {
-      n++;
-      sum += frameTime;
-      sumSq += frameTime * frameTime;
-      if (frameTime < minFt) minFt = frameTime;
-      if (frameTime > maxFt) maxFt = frameTime;
+    n++;
 
-      const fps = 1000 / frameTime;
-      const bucketIdx = Math.min(Math.floor(fps / FPS_BUCKET_WIDTH), FPS_HIST_BUCKETS - 1);
-      fpsHistogram[bucketIdx]++;
+    // Welford's online mean + variance
+    const delta = frameTime - wMean;
+    wMean += delta / n;
+    const delta2 = frameTime - wMean;
+    wM2 += delta * delta2;
 
-      if (n <= MAX_RENDER_FRAMES) {
-        frames.push({ frame: n, frameTime, fps });
+    if (frameTime < minFt) minFt = frameTime;
+    if (frameTime > maxFt) maxFt = frameTime;
+
+    const fps = 1000 / frameTime;
+    const bucketIdx = Math.min(Math.floor(fps / FPS_BUCKET_WIDTH), FPS_HIST_BUCKETS - 1);
+    fpsHistogram[bucketIdx]++;
+
+    // Evenly-spaced sampling: keep MAX_RENDER_FRAMES samples
+    if (n === nextSampleAt) {
+      sampledFrameTimes.push(frameTime);
+      if (sampledFrameTimes.length >= MAX_RENDER_FRAMES) {
+        // Compact: keep every other sample and double the step
+        for (let i = 0; i < sampledFrameTimes.length / 2; i++) {
+          sampledFrameTimes[i] = sampledFrameTimes[i * 2];
+        }
+        sampledFrameTimes.length = Math.floor(sampledFrameTimes.length / 2);
+        sampleStep *= 2;
       }
-    } else {
-      deviationSum += Math.abs(frameTime - avgFt) / avgFt;
-      if (frameTime > avgFt * 1.5) stutterCount++;
-      if (stdDev && stdDev > 0) {
-        const zscore = Math.abs(frameTime - avgFt) / stdDev;
-        if (zscore > 3) highCount++;
-        else if (zscore > 2) medCount++;
-      }
-    }
-  };
-
-  const processChunk = (chunk: string, avgFt?: number, stdDev?: number) => {
-    const combined = leftover + chunk;
-    const lines = combined.split('\n');
-    leftover = lines.pop() ?? '';
-    for (const line of lines) {
-      processLine(line.trim(), avgFt, stdDev);
-      yieldCounter++;
+      nextSampleAt += sampleStep;
     }
   };
 
@@ -167,7 +169,13 @@ async function parseCSVFileStreaming(
     if (done) break;
     bytesRead += value.byteLength;
     const chunk = decoder.decode(value, { stream: true });
-    processChunk(chunk);
+    const combined = leftover + chunk;
+    const lines = combined.split('\n');
+    leftover = lines.pop() ?? '';
+    for (const line of lines) {
+      processLine(line.trim());
+      yieldCounter++;
+    }
     onProgress?.(n, bytesRead, file.size);
     if (yieldCounter >= YIELD_INTERVAL) {
       await yieldToMain();
@@ -178,26 +186,13 @@ async function parseCSVFileStreaming(
 
   if (n === 0) throw new Error('No valid frame time data found in CSV');
 
-  const avgFt = sum / n;
-  const variance = sumSq / n - avgFt * avgFt;
+  const avgFt = wMean;
+  const variance = n > 1 ? wM2 / n : 0;
   const stdDev = Math.sqrt(Math.max(0, variance));
 
-  leftover = '';
-  yieldCounter = 0;
-  bytesRead = 0;
-  firstDataRowParsed = false;
-
-  const reader2 = file.stream().getReader();
-  let headerSkipped = false;
-
-  const processLine2 = (line: string) => {
-    if (line === '') return;
-    if (!headerSkipped) { headerSkipped = true; return; }
-    const cols = line.split(',');
-    const raw = (cols[frameTimeIndex] ?? '').trim();
-    if (raw === '' || raw.toUpperCase() === 'NA') return;
-    const frameTime = parseFloat(raw);
-    if (isNaN(frameTime) || frameTime <= 0) return;
+  // Compute deviation-based metrics from the sampled frames (close approximation)
+  // and scale to total frame count
+  for (const frameTime of sampledFrameTimes) {
     deviationSum += Math.abs(frameTime - avgFt) / avgFt;
     if (frameTime > avgFt * 1.5) stutterCount++;
     if (stdDev > 0) {
@@ -205,39 +200,38 @@ async function parseCSVFileStreaming(
       if (zscore > 3) highCount++;
       else if (zscore > 2) medCount++;
     }
-    yieldCounter++;
-  };
-
-  while (true) {
-    const { done, value } = await reader2.read();
-    if (done) break;
-    bytesRead += value.byteLength;
-    const chunk = decoder.decode(value, { stream: true });
-    const combined = leftover + chunk;
-    const lines = combined.split('\n');
-    leftover = lines.pop() ?? '';
-    for (const line of lines) processLine2(line.trim());
-    if (yieldCounter >= YIELD_INTERVAL) {
-      await yieldToMain();
-      yieldCounter = 0;
-    }
   }
-  if (leftover.trim()) processLine2(leftover.trim());
+
+  // Scale counts from sample to total population
+  const sampleSize = sampledFrameTimes.length;
+  if (sampleSize > 0 && sampleSize < n) {
+    const scaleFactor = n / sampleSize;
+    stutterCount = Math.round(stutterCount * scaleFactor);
+    highCount = Math.round(highCount * scaleFactor);
+    medCount = Math.round(medCount * scaleFactor);
+    deviationSum = deviationSum * scaleFactor;
+  }
 
   const avgDeviation = n > 0 ? deviationSum / n : 0;
   const truncated = n > MAX_RENDER_FRAMES;
 
+  const frameObjects: FrameDataPoint[] = sampledFrameTimes.map((frameTime, i) => ({
+    frame: Math.round((i / sampledFrameTimes.length) * n) + 1,
+    frameTime,
+    fps: 1000 / frameTime,
+  }));
+
   const dataset: DriverDataset = {
     label,
     fileName: file.name,
-    frames,
+    frames: frameObjects,
     metadata,
     truncated,
     totalFrameCount: n,
   };
 
   const { metrics, analysis } = computeMetricsFromAccumulator({
-    n, sum, sumSq, minFt, maxFt,
+    n, sum: avgFt * n, sumSq: (variance + avgFt * avgFt) * n, minFt, maxFt,
     fpsHistogram, fpsHistBuckets: FPS_HIST_BUCKETS, fpsBucketWidth: FPS_BUCKET_WIDTH,
     stutterCount, avgDeviation, variance, highCount, medCount, avgFt, stdDev,
   });
@@ -269,14 +263,24 @@ export async function parseCSVText(
   const firstDataCols = csvText.slice(bodyStart, firstNewline === -1 ? undefined : firstNewline).split(',');
   const metadata = detectFrameViewMetadata(headers, firstDataCols);
 
-  const frames: FrameDataPoint[] = [];
   const fpsHistogram = new Int32Array(FPS_HIST_BUCKETS);
 
   let n = 0;
-  let sum = 0;
-  let sumSq = 0;
   let minFt = Infinity;
   let maxFt = -Infinity;
+  let stutterCount = 0;
+  let deviationSum = 0;
+  let highCount = 0;
+  let medCount = 0;
+
+  // Welford's online algorithm
+  let wMean = 0;
+  let wM2 = 0;
+
+  // Evenly-spaced reservoir sampling
+  const sampledFrameTimes: number[] = [];
+  let sampleStep = 1;
+  let nextSampleAt = 1;
 
   let pos = bodyStart;
   const len = csvText.length;
@@ -299,8 +303,13 @@ export async function parseCSVText(
     if (isNaN(frameTime) || frameTime <= 0) continue;
 
     n++;
-    sum += frameTime;
-    sumSq += frameTime * frameTime;
+
+    // Welford's online mean + variance
+    const delta = frameTime - wMean;
+    wMean += delta / n;
+    const delta2 = frameTime - wMean;
+    wM2 += delta * delta2;
+
     if (frameTime < minFt) minFt = frameTime;
     if (frameTime > maxFt) maxFt = frameTime;
 
@@ -308,8 +317,17 @@ export async function parseCSVText(
     const bucketIdx = Math.min(Math.floor(fps / FPS_BUCKET_WIDTH), FPS_HIST_BUCKETS - 1);
     fpsHistogram[bucketIdx]++;
 
-    if (n <= MAX_RENDER_FRAMES) {
-      frames.push({ frame: n, frameTime, fps });
+    // Evenly-spaced sampling
+    if (n === nextSampleAt) {
+      sampledFrameTimes.push(frameTime);
+      if (sampledFrameTimes.length >= MAX_RENDER_FRAMES) {
+        for (let i = 0; i < sampledFrameTimes.length / 2; i++) {
+          sampledFrameTimes[i] = sampledFrameTimes[i * 2];
+        }
+        sampledFrameTimes.length = Math.floor(sampledFrameTimes.length / 2);
+        sampleStep *= 2;
+      }
+      nextSampleAt += sampleStep;
     }
 
     rowIndex++;
@@ -323,53 +341,39 @@ export async function parseCSVText(
     throw new Error('No valid frame time data found in CSV');
   }
 
-  const avgFt = sum / n;
-  const variance = sumSq / n - avgFt * avgFt;
+  const avgFt = wMean;
+  const variance = n > 1 ? wM2 / n : 0;
   const stdDev = Math.sqrt(Math.max(0, variance));
 
-  let stutterCount = 0;
-  let deviationSum = 0;
-  let highCount = 0;
-  let medCount = 0;
-
-  let pos2 = bodyStart;
-  let rowIndex2 = 0;
-
-  while (pos2 < len) {
-    let lineEnd = csvText.indexOf('\n', pos2);
-    if (lineEnd === -1) lineEnd = len;
-
-    const line = csvText.slice(pos2, lineEnd).trim();
-    pos2 = lineEnd + 1;
-
-    if (line === '') continue;
-
-    const cols = line.split(',');
-    const raw = (cols[frameTimeIndex] ?? '').trim();
-    if (raw === '' || raw.toUpperCase() === 'NA') continue;
-
-    const frameTime = parseFloat(raw);
-    if (isNaN(frameTime) || frameTime <= 0) continue;
-
+  // Compute deviation-based metrics from sampled frames
+  for (const frameTime of sampledFrameTimes) {
     deviationSum += Math.abs(frameTime - avgFt) / avgFt;
-
     if (frameTime > avgFt * 1.5) stutterCount++;
-
     if (stdDev > 0) {
       const zscore = Math.abs(frameTime - avgFt) / stdDev;
       if (zscore > 3) highCount++;
       else if (zscore > 2) medCount++;
     }
+  }
 
-    rowIndex2++;
-    if (rowIndex2 % YIELD_INTERVAL === 0) {
-      onProgress?.(n);
-      await yieldToMain();
-    }
+  // Scale from sample to population
+  const sampleSize = sampledFrameTimes.length;
+  if (sampleSize > 0 && sampleSize < n) {
+    const scaleFactor = n / sampleSize;
+    stutterCount = Math.round(stutterCount * scaleFactor);
+    highCount = Math.round(highCount * scaleFactor);
+    medCount = Math.round(medCount * scaleFactor);
+    deviationSum = deviationSum * scaleFactor;
   }
 
   const avgDeviation = deviationSum / n;
   const truncated = n > MAX_RENDER_FRAMES;
+
+  const frames: FrameDataPoint[] = sampledFrameTimes.map((frameTime, i) => ({
+    frame: Math.round((i / sampledFrameTimes.length) * n) + 1,
+    frameTime,
+    fps: 1000 / frameTime,
+  }));
 
   const dataset: DriverDataset = {
     label,
@@ -382,8 +386,8 @@ export async function parseCSVText(
 
   const { metrics, analysis } = computeMetricsFromAccumulator({
     n,
-    sum,
-    sumSq,
+    sum: avgFt * n,
+    sumSq: (variance + avgFt * avgFt) * n,
     minFt,
     maxFt,
     fpsHistogram,
