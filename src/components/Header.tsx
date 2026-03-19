@@ -1,5 +1,5 @@
-import { Cpu, Activity, Download } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Cpu, Activity, Download, Info } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import DualFanGpu from './DualFanGpu';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -7,46 +7,70 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+function isRunningStandalone(): boolean {
+  const isIosStandalone =
+    'standalone' in navigator &&
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  const isMediaStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  return isIosStandalone || isMediaStandalone;
+}
+
 export default function Header() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [installed, setInstalled] = useState(false);
-  const [showIosHint, setShowIosHint] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [isIos, setIsIos] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    const isInStandalone = ('standalone' in navigator) && (navigator as Navigator & { standalone?: boolean }).standalone;
-
-    if (isIos && !isInStandalone) {
-      setShowIosHint(true);
-    }
+    setIsStandalone(isRunningStandalone());
+    setIsIos(/iphone|ipad|ipod/i.test(navigator.userAgent));
 
     const handler = (e: Event) => {
       e.preventDefault();
       setInstallPrompt(e as BeforeInstallPromptEvent);
     };
 
-    window.addEventListener('beforeinstallprompt', handler);
-    window.addEventListener('appinstalled', () => {
-      setInstalled(true);
+    const installedHandler = () => {
+      setIsStandalone(true);
       setInstallPrompt(null);
-    });
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', installedHandler);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installedHandler);
     };
   }, []);
 
+  useEffect(() => {
+    if (!showTooltip) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (tooltipRef.current && !tooltipRef.current.contains(e.target as Node)) {
+        setShowTooltip(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showTooltip]);
+
   const handleInstall = async () => {
-    if (!installPrompt) return;
-    await installPrompt.prompt();
-    const { outcome } = await installPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setInstalled(true);
-      setInstallPrompt(null);
+    if (installPrompt) {
+      await installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setIsStandalone(true);
+        setInstallPrompt(null);
+      }
+    } else {
+      setShowTooltip((v) => !v);
     }
   };
 
-  const showInstallButton = (installPrompt && !installed) || showIosHint;
+  const hasNativePrompt = !!installPrompt;
+  const showInstallButton = !isStandalone;
 
   return (
     <header className="relative overflow-hidden border-b border-nvidia-border bg-nvidia-panel">
@@ -75,25 +99,38 @@ export default function Header() {
             <StatusIndicator icon={<Cpu className="h-4 w-4" />} label="Hardware" status="active" />
             <StatusIndicator icon={<Activity className="h-4 w-4" />} label="Telemetry" status="active" />
 
-            {installed ? (
+            {isStandalone ? (
               <div className="flex items-center gap-2 rounded-md bg-nvidia-bg/60 px-3 py-1.5 ring-1 ring-nvidia-border">
                 <div className="h-2 w-2 rounded-full bg-nvidia-green animate-pulse-glow" />
                 <span className="font-mono text-xs text-nvidia-green">INSTALLED</span>
               </div>
             ) : showInstallButton ? (
-              <div className="relative group">
+              <div className="relative" ref={tooltipRef}>
                 <button
                   onClick={handleInstall}
                   className="flex items-center gap-2 rounded-md bg-nvidia-green/10 px-3 py-1.5 ring-1 ring-nvidia-green/50 transition-all hover:bg-nvidia-green/20 hover:ring-nvidia-green active:scale-95"
                 >
-                  <Download className="h-3.5 w-3.5 text-nvidia-green" />
+                  {hasNativePrompt ? (
+                    <Download className="h-3.5 w-3.5 text-nvidia-green" />
+                  ) : (
+                    <Info className="h-3.5 w-3.5 text-nvidia-green" />
+                  )}
                   <span className="font-mono text-xs text-nvidia-green">INSTALL</span>
                 </button>
-                {showIosHint && (
-                  <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-nvidia-border bg-nvidia-panel p-3 shadow-xl z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    <p className="font-mono text-[10px] text-nvidia-muted leading-relaxed">
-                      Tap the <span className="text-nvidia-green">Share</span> button then select <span className="text-nvidia-green">Add to Home Screen</span>
-                    </p>
+
+                {showTooltip && (
+                  <div className="absolute right-0 top-full mt-2 w-60 rounded-lg border border-nvidia-border bg-nvidia-panel p-3 shadow-xl z-50">
+                    {isIos ? (
+                      <p className="font-mono text-[10px] text-nvidia-muted leading-relaxed">
+                        Tap the <span className="text-nvidia-green">Share</span> button in Safari then select{' '}
+                        <span className="text-nvidia-green">Add to Home Screen</span>
+                      </p>
+                    ) : (
+                      <p className="font-mono text-[10px] text-nvidia-muted leading-relaxed">
+                        Open this page in <span className="text-nvidia-green">Chrome</span> or{' '}
+                        <span className="text-nvidia-green">Edge</span> and use the browser menu to install
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
