@@ -11,10 +11,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
-    "electron:compile": "tsc -p tsconfig.electron.json",
+    "electron:compile": "tsc -p tsconfig.electron.json && node -e \"require('fs').renameSync('dist-electron/main.js','dist-electron/main.cjs')\"",
     "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
-    "electron:build": "vite build && tsc -p tsconfig.electron.json && electron-builder --win --x64 --publish never",
-    "electron:build:dir": "vite build && tsc -p tsconfig.electron.json && electron-builder --win --x64 --dir"
+    "electron:build": "vite build && tsc -p tsconfig.electron.json && node -e \"require('fs').renameSync('dist-electron/main.js','dist-electron/main.cjs')\" && electron-builder --win --x64 --publish never",
+    "electron:build:dir": "vite build && tsc -p tsconfig.electron.json && node -e \"require('fs').renameSync('dist-electron/main.js','dist-electron/main.cjs')\" && electron-builder --win --x64 --dir"
   },
   "build": {
     "appId": "com.framebench.analyzer",
