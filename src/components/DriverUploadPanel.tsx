@@ -3,6 +3,8 @@ import { Upload, FileText, X, CheckCircle2, AlertCircle, Cpu, Monitor, Info } fr
 import type { DriverDataset, UploadStatus } from '../types/telemetry';
 import { MAX_FILE_SIZE, MAX_ROWS_TO_PARSE } from '../lib/csvParser';
 
+const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
 interface Props {
   label: string;
   driverKey: 'A' | 'B';
@@ -36,6 +38,27 @@ export default function DriverUploadPanel({
     },
     [onFileSelect]
   );
+
+  // Open native OS file dialog when running in Tauri
+  const openNativeDialog = useCallback(async () => {
+    try {
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const { readFile } = await import('@tauri-apps/plugin-fs');
+      const selected = await open({
+        title: 'Select CSV benchmark file',
+        filters: [{ name: 'CSV Files', extensions: ['csv', 'gz'] }],
+        multiple: false,
+      });
+      if (!selected || typeof selected !== 'string') return;
+      const bytes = await readFile(selected);
+      const fileName = selected.replace(/\\/g, '/').split('/').pop() ?? 'data.csv';
+      const file = new File([bytes], fileName);
+      validateAndSelect(file);
+    } catch {
+      // Fall back to HTML input if dialog fails
+      inputRef.current?.click();
+    }
+  }, [validateAndSelect]);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -152,7 +175,14 @@ export default function DriverUploadPanel({
         <div
           onDrop={handleDrop}
           onDragOver={handleDragOver}
-          onClick={() => status !== 'processing' && status !== 'uploading' && inputRef.current?.click()}
+          onClick={() => {
+            if (status === 'processing' || status === 'uploading') return;
+            if (isTauri) {
+              openNativeDialog();
+            } else {
+              inputRef.current?.click();
+            }
+          }}
           className={`flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed px-4 py-6 transition-all ${
             status === 'error' || sizeError
               ? 'border-nvidia-danger/50 bg-nvidia-danger/5'

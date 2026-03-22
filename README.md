@@ -1,8 +1,8 @@
 # FrameBench Analyzer
 
-GPU driver benchmarking and frame time telemetry analysis dashboard for detecting frame pacing instability, stutter events, and performance regressions between driver builds.
+GPU driver benchmarking and frame time telemetry analysis tool for detecting frame pacing instability, stutter events, and performance regressions between driver builds.
 
-Supports native Nvidia FrameView CSV exports as well as generic frame time capture formats. Runs as a web app (PWA) with offline support.
+Supports native NVIDIA FrameView CSV exports and generic frame time formats. Ships as a **Windows desktop app** (Tauri v2, 3.5 MB installer) and a **PWA** with offline support.
 
 ## Dashboard Demo
 
@@ -18,54 +18,159 @@ https://vinodh-framebench-analyzer.bolt.host
 
 ---
 
+## Getting Started
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) 18+
+- [Rust](https://rustup.rs/) — desktop app only
+- [Microsoft WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) — pre-installed on Windows 11; auto-downloaded on Windows 10 if missing
+
+### Web / PWA
+
+```bash
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173`. Install as a PWA from the browser's install prompt for offline support.
+
+### Windows Desktop App (Tauri)
+
+**Development with hot-reload:**
+```bash
+npm install
+npm run tauri:dev
+```
+
+Opens the native window with hot-reload. DevTools open automatically.
+
+**Production build:**
+```bash
+npm run tauri:build
+```
+
+Outputs installer to:
+```
+src-tauri/target/release/bundle/nsis/FrameBench Analyzer_1.0.0_x64-setup.exe
+```
+
+**Run without installing:**
+```bash
+./src-tauri/target/release/app.exe
+```
+
+---
+
 ## Overview
 
-FrameBench Analyzer processes frame time telemetry collected during gameplay benchmarks and produces a detailed performance analysis.
+FrameBench Analyzer processes frame time telemetry from gameplay benchmarks and produces detailed performance analysis including regression detection, QA scoring, anomaly classification, and exportable HTML reports.
 
-The tool detects:
-
-- Frame pacing instability and micro stutters
-- Performance regressions between driver builds
-- Frame time anomalies using statistical spike detection
-- Hardware bottlenecks from FrameView metadata
-
-Sessions and their results are persisted to a Supabase database so historical comparisons can be reviewed at any time.
-
-A built-in demo mode generates synthetic sample datasets so the tool can be explored without uploading real captures.
+Runs as a native Windows desktop app (Rust/Tauri v2 backend) or as a browser PWA. Desktop-only features — live GPU monitoring, system tray, native save dialog, toast notifications — are available exclusively in the desktop build.
 
 ---
 
 ## Key Features
 
+### Analysis
+
 **Driver Comparison Mode**
-Upload telemetry from two driver builds (Driver A vs Driver B) and compare performance stability side by side.
+Upload telemetry CSVs from two driver builds and compare frame pacing, FPS, variance, and stutter side by side with automatic regression detection.
 
-**Native Nvidia FrameView CSV Support**
-Upload CSV files exported directly from Nvidia FrameView. Hardware metadata — GPU model, CPU model, render resolution, and application name — is automatically extracted from the file header and displayed in the session panel.
-
-**Multi-Format CSV Ingestion**
-Accepts FrameView exports (`MsBetweenPresents`, `MsBetweenDisplayChange`), PresentMon captures (`FrameTime`), and generic frame time CSVs. Compressed `.csv.gz` files are also supported. `NA` values and extra columns are handled gracefully.
-
-**Large File Processing**
-CSV files up to 50,000 rows are processed using a Web Worker to avoid blocking the UI. Files exceeding 25,000 frames are noted as truncated in the display; full frame counts are preserved in metadata.
-
-**Animated Telemetry Dashboard**
-NVIDIA-themed dashboard with a custom animated dual-fan GPU widget, circular score indicators, frame time line charts, and frame time distribution histograms.
-
-**QA Anomaly Analysis**
-Statistical spike detection classifies anomalies as High, Medium, or Low severity and assigns an overall QA score (0–100) with a PASS / WARNING / FAIL stability rating.
+**QA Anomaly Detection**
+Z-score based spike detection classifies frame time anomalies as High / Medium / Low severity. Assigns an overall QA score (0–100) with a PASS / WARNING / FAIL stability rating.
 
 **Driver Regression Detection**
-Automatically flags regressions when a new driver shows an FPS drop greater than 3%, a variance increase greater than 20%, or a stutter score increase greater than 2 points versus a baseline.
+Automatically flags regressions when: FPS drops more than 3%, frame time variance increases more than 20%, or stutter score increases more than 2 points versus the baseline driver.
 
-**HTML Report Export**
-Generate a downloadable, self-contained HTML performance report with a dark NVIDIA-styled layout including all metrics, QA analysis, and regression verdict.
+**Large File Processing**
+CSVs up to 50,000 rows processed via a Web Worker to avoid UI blocking. Files above 25,000 frames are noted as truncated; full frame counts are preserved in metadata.
 
-**PWA Support**
-Installable as a Progressive Web App on desktop and mobile with offline capability via a service worker.
+**Multi-Format CSV Ingestion**
+Accepts FrameView exports (`MsBetweenPresents`, `MsBetweenDisplayChange`), PresentMon (`FrameTime`), and generic frame time CSVs. Compressed `.csv.gz` files supported. `NA` values and extra columns handled gracefully.
+
+**Native NVIDIA FrameView CSV Support**
+Hardware metadata — GPU model, CPU model, render resolution, application name — is auto-extracted from the FrameView file header.
+
+---
+
+### Visualization
+
+**Frame Time Charts**
+Line chart per dataset showing frame delivery over time with average reference line. Sampled to 500 points for render performance.
+
+**Comparison Overlay**
+Both datasets plotted on the same axes for direct A vs B frame time comparison.
+
+**Frame Time Distribution Histograms**
+2ms-binned histogram showing frame time spread. Stutter spikes (>30ms) highlighted in red with event count.
+
+**Circular Score Indicators**
+Animated SVG rings for GPU Stability Score, Frame Pacing Score, and Benchmark Reliability verdict at the top of the dashboard.
 
 **Demo Mode**
-The "Generate Sample Telemetry" button creates two synthetic datasets — a stable baseline and a stuttery comparison — so the full workflow can be explored without uploading files.
+"Generate Sample Telemetry" creates two synthetic 1,200-frame datasets — a stable baseline (PASS, ~92 score) and a stuttery comparison (WARNING, ~65 score) — for exploring the workflow without real captures.
+
+---
+
+### Desktop App — Native Windows Features
+
+**Live GPU Hardware Monitoring** *(Tauri only)*
+Real-time GPU stats via `nvidia-smi` polled every 3 seconds. Displays:
+- Core Temperature
+- Power Draw
+- VRAM Usage
+- Fan Speed
+- GPU Utilization %
+- Core Clock MHz
+- Memory Clock MHz
+- Performance State (P0–P8)
+
+Falls back to simulated display values gracefully when no NVIDIA GPU is present.
+
+**Rolling GPU Telemetry Chart** *(Tauri only)*
+6-minute rolling time-series chart of GPU temperature, utilization, power draw, and core clock. Sampled every 3 seconds (120 samples), rendered with dual Y-axes via Recharts. Appears automatically below the upload grid once data starts accumulating.
+
+**System Tray** *(Tauri only)*
+App minimizes to the Windows system tray. Tray icon tooltip shows live GPU temperature and power (`FrameBench Analyzer | GPU 72°C  245W`). Right-click menu provides Show / Hide and Quit.
+
+**Native Save Report Dialog** *(Tauri only)*
+The "Download Report" button opens a native Windows Save As dialog. On the browser/PWA, reports download via the standard blob mechanism.
+
+**Windows Toast Notifications** *(Tauri only)*
+A native toast notification fires when a performance regression is detected after uploading both driver CSVs.
+
+**Native File Picker** *(Tauri only)*
+CSV upload uses the OS file open dialog instead of the HTML file input.
+
+---
+
+### Report & Persistence
+
+**HTML Report Export**
+Self-contained HTML performance report with dark NVIDIA-styled layout. Includes all metrics, QA analysis, anomaly breakdown, and regression verdict. Saved natively (desktop) or downloaded as a file (browser).
+
+**Supabase Persistence**
+Sessions and results are persisted to a Supabase database. Up to 10,000 frames per driver are sampled and stored for historical review.
+
+**PWA / Offline Support**
+Service worker provides cache-first offline capability when installed as a PWA. Disabled in the Tauri desktop context (not needed).
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, TypeScript, Vite 5, Tailwind CSS 3 |
+| Charts | Recharts 3 |
+| Desktop backend | Tauri v2 (Rust) |
+| GPU data | `nvidia-smi` via `std::process::Command` |
+| Native dialogs | `tauri-plugin-dialog` |
+| Notifications | `tauri-plugin-notification` |
+| Installer | NSIS (Windows x64, ~3.5 MB) |
+| Database | Supabase (PostgreSQL + Row Level Security) |
+| PWA | Vite PWA plugin + service worker |
 
 ---
 
@@ -73,13 +178,11 @@ The "Generate Sample Telemetry" button creates two synthetic datasets — a stab
 
 | Source | Required Column | Notes |
 |---|---|---|
-| Nvidia FrameView | `MsBetweenPresents` or `MsBetweenDisplayChange` | Also parses hardware metadata columns |
+| NVIDIA FrameView | `MsBetweenPresents` or `MsBetweenDisplayChange` | Also parses GPU, CPU, resolution, application metadata |
 | PresentMon | `FrameTime` or `frame_time` | |
 | Generic | `FrameTime`, `frame_time`, or `frame time` | Any CSV with a recognizable frame time column |
 
-FrameView exports additionally provide hardware metadata columns (`Application`, `GPU`, `CPU`, `Resolution`) which are parsed automatically when present.
-
-Compressed `.csv.gz` files are supported in addition to plain `.csv`.
+Compressed `.csv.gz` files are supported alongside plain `.csv`.
 
 ---
 
@@ -87,101 +190,119 @@ Compressed `.csv.gz` files are supported in addition to plain `.csv`.
 
 | Metric | Description |
 |---|---|
-| Average FPS | Mean frames per second across the capture |
-| 1% Low FPS | Frame rate at the 1st percentile — represents worst-case stutter |
-| 0.1% Low FPS | Frame rate at the 0.1st percentile — extreme outlier performance |
-| Min / Max FPS | Absolute floor and ceiling frame rates |
+| Average FPS | Mean frames per second |
+| 1% Low FPS | Frame rate at the 1st percentile — worst-case stutter |
+| 0.1% Low FPS | Frame rate at the 0.1st percentile — extreme outliers |
+| Min / Max FPS | Absolute floor and ceiling |
 | Average Frame Time | Mean milliseconds per frame |
 | Frame Time Variance | Statistical variance of frame delivery timing |
-| Frame Pacing Stability | 0–100% score reflecting frame delivery consistency |
-| Stutter Score | Percentage of frames delivered more than 1.5x slower than average |
-| QA Overall Score | 0–100 composite rating combining stability, variance, and anomaly counts |
-| Stability Rating | PASS / WARNING / FAIL verdict based on QA score thresholds |
+| Frame Pacing Stability | 0–100% consistency score |
+| Stutter Score | % of frames delivered more than 1.5× slower than average |
+| QA Overall Score | 0–100 composite from stability, variance, and anomaly counts |
+| Stability Rating | PASS / WARNING / FAIL |
+
+---
+
+## GPU Telemetry Fields (Desktop)
+
+Queried live from `nvidia-smi` every 3 seconds:
+
+| Field | Unit |
+|---|---|
+| Core Temperature | °C |
+| Power Draw | W |
+| VRAM Used / Total | MB |
+| Fan Speed | % |
+| GPU Utilization | % |
+| Core Clock | MHz |
+| Memory Clock | MHz |
+| Performance State | P0–P8 |
 
 ---
 
 ## Example Workflow
 
-1. Run a gameplay benchmark and capture frame times using Nvidia FrameView (or any compatible tool)
-2. Export the capture as a CSV file
-3. Open FrameBench Analyzer and upload the CSV - hardware metadata is auto-detected from FrameView exports
-4. Upload a second CSV for comparison 
-5. FrameBench Analyzer computes metrics, runs QA analysis, and produces a regression verdict
-6. Download the HTML report or save the session to the database for future reference
-7. Use the demo mode to explore the full workflow without uploading files
+1. Run a gameplay benchmark with NVIDIA FrameView (or any compatible tool)
+2. Export the capture as a CSV
+3. Open FrameBench Analyzer — upload the CSV; hardware metadata is auto-detected
+4. Upload a second CSV for the comparison driver
+5. Metrics, QA analysis, and regression verdict are computed automatically
+6. Download the HTML report (native Save As dialog on desktop) or save the session to Supabase
+7. Use demo mode to explore the full workflow without real captures
 
 ---
 
 ## Database Schema
 
-Data is persisted to Supabase with Row Level Security enabled on all tables. Anonymous users can read and write records created within the last 24 hours.
+Data persisted to Supabase with Row Level Security. Anonymous users can read and write records from the last 24 hours.
 
 ### `telemetry_sessions`
 
-Stores one record per comparison session.
-
 | Column | Type | Description |
 |---|---|---|
 | `id` | uuid | Primary key |
-| `session_name` | text | Auto-generated session label |
-| `driver_a_name` | text | Filename of Driver A CSV |
-| `driver_b_name` | text | Filename of Driver B CSV |
-| `gpu_name` | text | GPU model auto-detected from FrameView CSV |
-| `cpu_name` | text | CPU model auto-detected from FrameView CSV |
-| `resolution` | text | Render resolution auto-detected from FrameView CSV |
-| `application` | text | Application/game name from FrameView CSV |
-| `csv_source` | text | Source format: `frameview` or `generic` |
-| `created_at` | timestamptz | Session creation timestamp |
+| `session_name` | text | Auto-generated label |
+| `driver_a_name` | text | Driver A filename |
+| `driver_b_name` | text | Driver B filename |
+| `gpu_name` | text | GPU model from FrameView CSV |
+| `cpu_name` | text | CPU model from FrameView CSV |
+| `resolution` | text | Render resolution from FrameView CSV |
+| `application` | text | Game/app name from FrameView CSV |
+| `csv_source` | text | `frameview` or `generic` |
+| `created_at` | timestamptz | Creation timestamp |
 
 ### `frame_data`
 
-Stores per-frame telemetry rows linked to a session. Sampled to a maximum of 10,000 frames per driver before storage.
+Sampled to 10,000 frames per driver before storage.
 
 | Column | Type | Description |
 |---|---|---|
 | `id` | uuid | Primary key |
-| `session_id` | uuid | Foreign key to `telemetry_sessions` |
+| `session_id` | uuid | FK to `telemetry_sessions` |
 | `driver_label` | text | `A` or `B` |
-| `frame_number` | integer | Sequential frame index |
-| `frame_time` | float8 | Frame duration in milliseconds |
-| `created_at` | timestamptz | Row creation timestamp |
+| `frame_number` | integer | Sequential index |
+| `frame_time` | float8 | Frame duration in ms |
+| `created_at` | timestamptz | Creation timestamp |
 
 ### `comparison_results`
 
-Stores computed metrics and regression analysis for a session.
-
 | Column | Type | Description |
 |---|---|---|
 | `id` | uuid | Primary key |
-| `session_id` | uuid | Foreign key to `telemetry_sessions` |
+| `session_id` | uuid | FK to `telemetry_sessions` |
 | `metrics_a` | jsonb | Computed metrics for Driver A |
 | `metrics_b` | jsonb | Computed metrics for Driver B |
 | `qa_analysis_a` | jsonb | QA anomaly analysis for Driver A |
 | `qa_analysis_b` | jsonb | QA anomaly analysis for Driver B |
 | `regression_result` | jsonb | Regression verdict and details |
-| `created_at` | timestamptz | Result creation timestamp |
+| `created_at` | timestamptz | Creation timestamp |
 
 ---
 
-
 ## Future Improvements
 
-Planned upgrades include:
-
-- Windows desktop app release (Electron)
-- DLSS artifact detection
+- macOS / Linux desktop builds (Tauri cross-compile)
+- DLSS / image quality artifact detection
 - Automated benchmark ingestion pipeline
-- ML-based frame pacing prediction
 - Multi-session trend analysis across driver versions
+- ML-based frame pacing anomaly prediction
 
 ---
 
 ## Inspiration
 
-This project was created as a tool for hardware perfomance analysis, GPU driver QA pipelines used in graphics driver validation labs.
+Built as a tooling prototype for hardware performance analysis and GPU driver QA pipelines used in graphics driver validation labs.
 
 ---
 
 ## Author
 
 Vinodh Shekhar
+
+---
+
+## Contributors
+
+**[Karan Balaji](https://www.linkedin.com/in/karanbalaji/)** — Windows desktop app (Tauri v2)
+
+Migrated the app from Electron to Tauri v2 (Rust backend + WebView2), reducing the installer from ~200 MB to 3.5 MB. Added native Windows features: live GPU telemetry via `nvidia-smi`, rolling telemetry history chart, system tray with live GPU stats, native Save As dialog for reports, and Windows toast notifications on regression detection.

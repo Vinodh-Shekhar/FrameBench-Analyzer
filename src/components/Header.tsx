@@ -1,6 +1,8 @@
-import { Cpu, Activity, Download, Info } from 'lucide-react';
+import { Cpu, Activity, Download, Info, Monitor } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import DualFanGpu from './DualFanGpu';
+
+const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -23,6 +25,9 @@ export default function Header() {
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Don't set up PWA install listeners when running inside Tauri
+    if (isTauri) return;
+
     setIsStandalone(isRunningStandalone());
     setIsIos(/iphone|ipad|ipod/i.test(navigator.userAgent));
 
@@ -99,7 +104,12 @@ export default function Header() {
             <StatusIndicator icon={<Cpu className="h-4 w-4" />} label="Hardware" status="active" />
             <StatusIndicator icon={<Activity className="h-4 w-4" />} label="Telemetry" status="active" />
 
-            {isStandalone ? (
+            {isTauri ? (
+              <div className="flex items-center gap-2 rounded-md bg-nvidia-bg/60 px-3 py-1.5 ring-1 ring-nvidia-border">
+                <Monitor className="h-3.5 w-3.5 text-nvidia-green" />
+                <span className="font-mono text-xs text-nvidia-green">DESKTOP APP</span>
+              </div>
+            ) : isStandalone ? (
               <div className="flex items-center gap-2 rounded-md bg-nvidia-bg/60 px-3 py-1.5 ring-1 ring-nvidia-border">
                 <div className="h-2 w-2 rounded-full bg-nvidia-green animate-pulse-glow" />
                 <span className="font-mono text-xs text-nvidia-green">INSTALLED</span>

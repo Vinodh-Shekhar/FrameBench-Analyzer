@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import Header from './components/Header';
 import DriverUploadPanel from './components/DriverUploadPanel';
 import GpuStatusWidget from './components/GpuStatusWidget';
+import GpuTelemetryChart from './components/GpuTelemetryChart';
 import DemoCTA from './components/DemoCTA';
 import MetricsPanel from './components/MetricsPanel';
 import { SingleFrameTimeChart, ComparisonChart } from './components/FrameTimeChart';
@@ -12,7 +13,7 @@ import TelemetryWidgets from './components/TelemetryWidgets';
 import { parseCSVFile, MAX_RENDER_FRAMES } from './lib/csvParser';
 import { detectRegression } from './lib/analysis';
 import { generateSampleDatasets } from './lib/sampleData';
-import { generateReport } from './lib/reportGenerator';
+import { generateReport, buildReportHtml } from './lib/reportGenerator';
 import { supabase } from './lib/supabase';
 import { Download } from 'lucide-react';
 import type {
@@ -147,7 +148,12 @@ export default function App() {
         setProgressA
       );
       if (result && metricsB) {
-        setRegression(detectRegression(result.metrics, metricsB));
+        const reg = detectRegression(result.metrics, metricsB);
+        setRegression(reg);
+        if (reg.isRegressed && typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+          const { invoke } = await import('@tauri-apps/api/core');
+          invoke('show_notification', { title: 'Regression Detected', body: reg.summary }).catch(() => {});
+        }
       }
     },
     [processDriver, metricsB]
@@ -165,7 +171,12 @@ export default function App() {
         setProgressB
       );
       if (result && metricsA) {
-        setRegression(detectRegression(metricsA, result.metrics));
+        const reg = detectRegression(metricsA, result.metrics);
+        setRegression(reg);
+        if (reg.isRegressed && typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+          const { invoke } = await import('@tauri-apps/api/core');
+          invoke('show_notification', { title: 'Regression Detected', body: reg.summary }).catch(() => {});
+        }
       }
     },
     [processDriver, metricsA]
@@ -204,17 +215,20 @@ export default function App() {
     setRegression(detectRegression(mA, mB));
   }, []);
 
-  const handleDownloadReport = useCallback(() => {
-    generateReport({
-      datasetA,
-      datasetB,
-      metricsA,
-      metricsB,
-      analysisA,
-      analysisB,
-      regression,
-    });
-  }, [datasetA, datasetB, metricsA, metricsB, analysisA, analysisB, regression]);
+  const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
+  const handleDownloadReport = useCallback(async () => {
+    const reportInput = { datasetA, datasetB, metricsA, metricsB, analysisA, analysisB, regression };
+    if (isTauri) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const html = buildReportHtml(reportInput);
+      await invoke<string>('save_report', { html }).catch((e: unknown) => {
+        if (e !== 'Cancelled') console.error('Save report failed:', e);
+      });
+    } else {
+      generateReport(reportInput);
+    }
+  }, [datasetA, datasetB, metricsA, metricsB, analysisA, analysisB, regression, isTauri]);
 
   const hasData = !!datasetA || !!datasetB;
 
@@ -245,6 +259,8 @@ export default function App() {
             />
             <GpuStatusWidget hasData={hasData} />
           </div>
+
+          {isTauri && <GpuTelemetryChart />}
 
           {!hasData && <DemoCTA onGenerate={handleGenerateSample} />}
 

@@ -39,7 +39,7 @@ function warningList(warnings: string[]): string {
   return warnings.map(w => `<div class="warning-item">${w}</div>`).join('');
 }
 
-export function generateReport(input: ReportInput): void {
+export function buildReportHtml(input: ReportInput): string {
   const { datasetA, datasetB, metricsA, metricsB, analysisA, analysisB, regression } = input;
   const ts = new Date().toLocaleString();
 
@@ -275,6 +275,11 @@ ${regression ? `
 </body>
 </html>`;
 
+  return html;
+}
+
+export function generateReport(input: ReportInput): void {
+  const html = buildReportHtml(input);
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

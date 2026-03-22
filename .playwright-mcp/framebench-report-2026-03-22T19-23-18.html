@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FrameBench Report — 3/22/2026, 3:23:18 PM</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Courier New', Courier, monospace;
+    background: #0f1117;
+    color: #e2e8f0;
+    padding: 32px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  h1 { font-size: 22px; font-weight: 700; color: #76b900; letter-spacing: 0.05em; margin-bottom: 4px; }
+  h2 { font-size: 13px; font-weight: 600; color: #76b900; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+  h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin-bottom: 8px; }
+  .header { border-bottom: 1px solid #1e2a38; padding-bottom: 20px; margin-bottom: 28px; }
+  .header .subtitle { color: #64748b; font-size: 11px; margin-top: 4px; }
+  .section { border: 1px solid #1e2a38; border-radius: 8px; padding: 20px; margin-bottom: 20px; background: #141820; }
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .meta-col { background: #0f1117; border-radius: 6px; padding: 12px; border: 1px solid #1e2a38; }
+  .meta-col .col-label { font-size: 10px; color: #76b900; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 700; }
+  .meta-row { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-bottom: 1px solid #1e2a3820; }
+  .meta-row:last-child { border-bottom: none; }
+  .meta-row .key { color: #64748b; font-size: 11px; }
+  .meta-row .val { color: #e2e8f0; font-size: 11px; text-align: right; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; padding: 6px 8px; border-bottom: 1px solid #1e2a38; text-align: left; }
+  thead th.val-a { color: #76b900; }
+  thead th.val-b { color: #00b4d8; }
+  tbody tr:nth-child(even) { background: #0f111720; }
+  tbody td { padding: 7px 8px; font-size: 12px; border-bottom: 1px solid #1e2a3830; }
+  td.label { color: #94a3b8; }
+  td.val-a { color: #76b900; font-weight: 600; }
+  td.val-b { color: #00b4d8; font-weight: 600; }
+  .unit { font-weight: 400; color: #64748b; font-size: 10px; }
+  .qa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .qa-card { background: #0f1117; border-radius: 6px; padding: 14px; border: 1px solid #1e2a38; }
+  .qa-card .driver-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
+  .rating { font-size: 18px; font-weight: 700; }
+  .score { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .anomaly-row { display: flex; gap: 16px; margin-top: 12px; }
+  .anomaly { text-align: center; flex: 1; padding: 6px; border-radius: 4px; background: #141820; }
+  .anomaly .count { font-size: 16px; font-weight: 700; }
+  .anomaly .alabel { font-size: 9px; text-transform: uppercase; color: #64748b; margin-top: 2px; }
+  .high .count { color: #ef4444; }
+  .med .count { color: #f59e0b; }
+  .low .count { color: #64748b; }
+  .warning-item { background: #f59e0b10; border: 1px solid #f59e0b30; border-radius: 4px; padding: 6px 10px; margin-top: 6px; font-size: 11px; color: #fcd34d; }
+  .none { color: #64748b; font-size: 11px; }
+  .regression-box { padding: 14px; border-radius: 6px; margin-bottom: 16px; }
+  .regression-fail { background: #ef444410; border: 1px solid #ef444440; }
+  .regression-pass { background: #76b90010; border: 1px solid #76b90040; }
+  .regression-summary { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .regression-fail .regression-summary { color: #ef4444; }
+  .regression-pass .regression-summary { color: #76b900; }
+  .delta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+  .delta-card { background: #0f1117; border-radius: 4px; padding: 8px 10px; border: 1px solid #1e2a38; }
+  .delta-card .dlabel { font-size: 9px; text-transform: uppercase; color: #64748b; letter-spacing: 0.08em; }
+  .delta-card .dval { font-size: 14px; font-weight: 700; margin-top: 2px; }
+  .delta-neg { color: #ef4444; }
+  .delta-pos { color: #76b900; }
+  .delta-neutral { color: #94a3b8; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; margin-left: 10px; vertical-align: middle; }
+  .badge-fail { background: #ef444420; color: #ef4444; border: 1px solid #ef444440; }
+  .badge-pass { background: #76b90020; color: #76b900; border: 1px solid #76b90040; }
+  .footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid #1e2a38; color: #374151; font-size: 10px; display: flex; justify-content: space-between; }
+  @media print {
+    body { background: #fff; color: #111; }
+    .section, .meta-col, .qa-card, .delta-card, .anomaly { background: #f8fafc !important; border-color: #e2e8f0 !important; }
+    h1, h2, td.val-a { color: #166534 !important; }
+    td.val-b { color: #0369a1 !important; }
+    .rating { color: inherit !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>FrameBench Analyzer — Performance Report</h1>
+  <div class="subtitle">Generated: 3/22/2026, 3:23:18 PM &nbsp;|&nbsp; FrameBench Analyzer v1.0.0</div>
+</div>
+
+
+
+
+<div class="section">
+  <h2>Performance Metrics Comparison</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Metric</th>
+        <th class="val-a">Dataset A</th>
+        <th class="val-b">Dataset B</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+    <tr>
+      <td class="label">Average FPS</td>
+      <td class="val-a">74.0<span class="unit"> fps</span></td>
+      <td class="val-b">61.7<span class="unit"> fps</span></td>
+    </tr>
+      
+    <tr>
+      <td class="label">Average Frame Time</td>
+      <td class="val-a">13.52<span class="unit"> ms</span></td>
+      <td class="val-b">16.20<span class="unit"> ms</span></td>
+    </tr>
+      
+    <tr>
+      <td class="label">1% Low FPS</td>
+      <td class="val-a">62.9<span class="unit"> fps</span></td>
+      <td class="val-b">22.5<span class="unit"> fps</span></td>
+    </tr>
+      
+    <tr>
+      <td class="label">0.1% Low FPS</td>
+      <td class="val-a">61.3<span class="unit"> fps</span></td>
+      <td class="val-b">17.6<span class="unit"> fps</span></td>
+    </tr>
+      
+    <tr>
+      <td class="label">Min FPS</td>
+      <td class="val-a">60.2<span class="unit"> fps</span></td>
+      <td class="val-b">17.5<span class="unit"> fps</span></td>
+    </tr>
+      
+    <tr>
+      <td class="label">Max FPS</td>
+      <td class="val-a">99.4<span class="unit"> fps</span></td>
+      <td class="val-b">110.4<span class="unit"> fps</span></td>
+    </tr>
+      
+    <tr>
+      <td class="label">Frame Time Variance</td>
+      <td class="val-a">1.19<span class="unit"> ms²</span></td>
+      <td class="val-b">27.15<span class="unit"> ms²</span></td>
+    </tr>
+      
+    <tr>
+      <td class="label">Frame Pacing Stability</td>
+      <td class="val-a">93.3<span class="unit"> %</span></td>
+      <td class="val-b">83.6<span class="unit"> %</span></td>
+    </tr>
+      
+    <tr>
+      <td class="label">Stutter Score</td>
+      <td class="val-a">0.00<span class="unit"> %</span></td>
+      <td class="val-b">4.08<span class="unit"> %</span></td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+
+
+<div class="section">
+  <h2>QA Stability Analysis</h2>
+  <div class="qa-grid">
+    
+    <div class="qa-card">
+      <div class="driver-label" style="color:#76b900">Dataset A</div>
+      <div class="rating" style="color:#76b900">PASS</div>
+      <div class="score">Score: 99 / 100 &nbsp;|&nbsp; 1,200 frames</div>
+      <div class="anomaly-row">
+        <div class="anomaly high"><div class="count">1</div><div class="alabel">High</div></div>
+        <div class="anomaly med"><div class="count">37</div><div class="alabel">Medium</div></div>
+        <div class="anomaly low"><div class="count">1162</div><div class="alabel">Low</div></div>
+      </div>
+      <div style="margin-top:12px">
+        <h3>Instability Warnings</h3>
+        <p class="none">No warnings detected.</p>
+      </div>
+    </div>
+    
+    <div class="qa-card">
+      <div class="driver-label" style="color:#00b4d8">Dataset B</div>
+      <div class="rating" style="color:#f59e0b">WARNING</div>
+      <div class="score">Score: 40 / 100 &nbsp;|&nbsp; 1,200 frames</div>
+      <div class="anomaly-row">
+        <div class="anomaly high"><div class="count">31</div><div class="alabel">High</div></div>
+        <div class="anomaly med"><div class="count">13</div><div class="alabel">Medium</div></div>
+        <div class="anomaly low"><div class="count">1156</div><div class="alabel">Low</div></div>
+      </div>
+      <div style="margin-top:12px">
+        <h3>Instability Warnings</h3>
+        <div class="warning-item">High spike rate: 31 severe frame spikes detected (2.6%)</div><div class="warning-item">Frame pacing instability: stability score 83.6% is below threshold</div><div class="warning-item">1% low FPS (22.5) is significantly below average (61.7)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="section">
+  <h2>Regression Analysis <span class="badge badge-fail">REGRESSION DETECTED</span></h2>
+  <div class="regression-box regression-fail">
+    <div class="regression-summary">Driver Performance Regression Detected: FPS dropped 16.6%, variance increased 2185.1%, stutter increased by 4.1 points</div>
+  </div>
+  <div class="delta-grid">
+    <div class="delta-card">
+      <div class="dlabel">FPS Change</div>
+      <div class="dval delta-neg">
+        -16.6%
+      </div>
+    </div>
+    <div class="delta-card">
+      <div class="dlabel">Variance Change</div>
+      <div class="dval delta-neg">
+        +2185.1%
+      </div>
+    </div>
+    <div class="delta-card">
+      <div class="dlabel">Stutter Change</div>
+      <div class="dval delta-neg">
+        +4.08 pts
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>FrameBench Analyzer v1.0.0 — Prototype by Vinodh Shekhar</span>
+  <span>3/22/2026, 3:23:18 PM</span>
+</div>
+
+</body>
+</html>
