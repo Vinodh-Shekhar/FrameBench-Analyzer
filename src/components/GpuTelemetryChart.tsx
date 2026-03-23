@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   LineChart,
   Line,
@@ -28,6 +28,8 @@ interface ChartPoint {
 
 export default function GpuTelemetryChart() {
   const [data, setData] = useState<ChartPoint[]>([]);
+  const [gpuUnavailable, setGpuUnavailable] = useState(false);
+  const emptyPolls = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,8 +38,15 @@ export default function GpuTelemetryChart() {
       try {
         const { invoke } = await import('@tauri-apps/api/core');
         const snapshots = await invoke<GpuSnapshot[]>('get_gpu_history');
-        if (cancelled || snapshots.length === 0) return;
+        if (cancelled) return;
 
+        if (snapshots.length === 0) {
+          emptyPolls.current++;
+          if (emptyPolls.current >= 3) setGpuUnavailable(true);
+          return;
+        }
+
+        emptyPolls.current = 0;
         const t0 = snapshots[0].timestamp_secs;
         const points: ChartPoint[] = snapshots.map((s) => ({
           t: s.timestamp_secs - t0,
@@ -48,7 +57,8 @@ export default function GpuTelemetryChart() {
         }));
         setData(points);
       } catch {
-        // nvidia-smi unavailable — history stays empty
+        emptyPolls.current++;
+        if (emptyPolls.current >= 3) setGpuUnavailable(true);
       }
     };
 
@@ -59,6 +69,19 @@ export default function GpuTelemetryChart() {
       clearInterval(interval);
     };
   }, []);
+
+  if (gpuUnavailable && data.length === 0) {
+    return (
+      <div className="rounded-lg border border-nvidia-border bg-nvidia-panel p-4">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-nvidia-muted">
+          GPU Telemetry History
+        </span>
+        <p className="mt-3 text-center font-mono text-[11px] text-nvidia-muted">
+          NVIDIA GPU not detected — GPU telemetry requires an NVIDIA GPU with nvidia-smi installed.
+        </p>
+      </div>
+    );
+  }
 
   if (data.length < 2) {
     return (

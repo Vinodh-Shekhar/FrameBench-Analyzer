@@ -14,7 +14,6 @@ import { parseCSVFile, MAX_RENDER_FRAMES } from './lib/csvParser';
 import { detectRegression } from './lib/analysis';
 import { generateSampleDatasets } from './lib/sampleData';
 import { generateReport, buildReportHtml } from './lib/reportGenerator';
-import { supabase } from './lib/supabase';
 import { Download } from 'lucide-react';
 import type {
   DriverDataset,
@@ -34,7 +33,6 @@ export default function App() {
   const [analysisA, setAnalysisA] = useState<QAAnalysis | null>(null);
   const [analysisB, setAnalysisB] = useState<QAAnalysis | null>(null);
   const [regression, setRegression] = useState<RegressionResult | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const [progressA, setProgressA] = useState<{ frames: number; bytes: number; total: number } | null>(null);
   const [progressB, setProgressB] = useState<{ frames: number; bytes: number; total: number } | null>(null);
 
@@ -65,65 +63,6 @@ export default function App() {
         setMetrics(metrics);
         setAnalysis(analysis);
 
-        const meta = dataset.metadata;
-        const metaFields = meta
-          ? {
-              gpu_name: meta.gpu,
-              cpu_name: meta.cpu,
-              resolution: meta.resolution,
-              application: meta.application,
-              csv_source: meta.source,
-            }
-          : {};
-
-        let currentSessionId = sessionId;
-        if (!currentSessionId) {
-          const { data } = await supabase
-            .from('telemetry_sessions')
-            .insert({
-              session_name: `Session ${new Date().toISOString()}`,
-              driver_a_name: driver === 'A' ? file.name : '',
-              driver_b_name: driver === 'B' ? file.name : '',
-              ...metaFields,
-            })
-            .select('id')
-            .maybeSingle();
-          if (data) {
-            currentSessionId = data.id;
-            setSessionId(data.id);
-          }
-        } else {
-          const updateField =
-            driver === 'A' ? { driver_a_name: file.name } : { driver_b_name: file.name };
-          await supabase
-            .from('telemetry_sessions')
-            .update({ ...updateField, ...metaFields })
-            .eq('id', currentSessionId);
-        }
-
-        if (currentSessionId) {
-          const DB_FRAME_CAP = 10_000;
-          const batchSize = 500;
-          const totalFrames = dataset.frames.length;
-          const step = totalFrames > DB_FRAME_CAP ? totalFrames / DB_FRAME_CAP : 1;
-          const count = Math.min(totalFrames, DB_FRAME_CAP);
-
-          for (let batchStart = 0; batchStart < count; batchStart += batchSize) {
-            const batchEnd = Math.min(batchStart + batchSize, count);
-            const batch = [];
-            for (let i = batchStart; i < batchEnd; i++) {
-              const f = dataset.frames[Math.floor(i * step)];
-              batch.push({
-                session_id: currentSessionId,
-                driver_label: driver,
-                frame_number: f.frame,
-                frame_time: f.frameTime,
-              });
-            }
-            await supabase.from('frame_data').insert(batch);
-          }
-        }
-
         setStatus('ready');
 
         return { metrics, analysis };
@@ -133,7 +72,7 @@ export default function App() {
         return null;
       }
     },
-    [sessionId]
+    []
   );
 
   const handleFileA = useCallback(
