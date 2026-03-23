@@ -67,7 +67,21 @@
       "Bash(powershell -Command \"& '$env:USERPROFILE\\\\.cargo\\\\bin\\\\cargo' check --manifest-path 'C:\\\\Coding-Projects\\\\nvidia-project\\\\src-tauri\\\\Cargo.toml' 2>&1\")",
       "Bash(powershell -Command \"& \\\\\"$env:USERPROFILE\\\\.cargo\\\\bin\\\\cargo\\\\\" check --manifest-path 'C:\\\\Coding-Projects\\\\nvidia-project\\\\src-tauri\\\\Cargo.toml' 2>&1\")",
       "Bash(powershell -Command \"& 'C:\\\\Users\\\\karan\\\\.cargo\\\\bin\\\\cargo.exe' check --manifest-path 'C:\\\\Coding-Projects\\\\nvidia-project\\\\src-tauri\\\\Cargo.toml' 2>&1\")",
-      "Bash(PATH=\"$HOME/.cargo/bin:$PATH\" npm run tauri:build)"
+      "Bash(PATH=\"$HOME/.cargo/bin:$PATH\" npm run tauri:build)",
+      "Bash(grep -n \"unwrap\\\\|expect\" /Users/karanbalaji/Documents/coding-projects/nvidia/src-tauri/src/*.rs)",
+      "Bash(grep -r \"\\\\.catch\\\\|\\\\.then\" /Users/karanbalaji/Documents/coding-projects/nvidia/src/components --include=*.tsx)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(node_modules/.bin/tsc --noEmit -p tsconfig.app.json)",
+      "Bash(sips:*)",
+      "Bash(PATH=\"$HOME/.cargo/bin:$PATH\" tauri icon /tmp/framebench-source.png --output src-tauri/icons 2>&1)",
+      "Read(//Users/karanbalaji/.cargo/bin/**)",
+      "Read(//usr/local/bin/**)",
+      "Bash(PATH=\"$HOME/.cargo/bin:$PATH\" cargo tauri --version)",
+      "Bash(PATH=\"$HOME/.cargo/bin:$PATH\" cargo tauri icon /tmp/framebench-source.png --output src-tauri/icons 2>&1)",
+      "Bash(PATH=\"$HOME/.cargo/bin:$PATH\" cargo check)",
+      "Bash(git restore:*)"
     ]
   }
 }
