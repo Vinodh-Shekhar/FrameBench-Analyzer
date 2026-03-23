@@ -1,3 +1,4 @@
+/* GPU_TELEMETRY_DISABLED — uncomment to re-enable GPU telemetry commands
 use std::process::Command as SysCommand;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
@@ -91,6 +92,7 @@ pub struct GpuHistoryState(pub Arc<Mutex<VecDeque<GpuSnapshot>>>);
 pub fn get_gpu_history(state: tauri::State<GpuHistoryState>) -> Vec<GpuSnapshot> {
     state.0.lock().unwrap().iter().cloned().collect()
 }
+*/ // end GPU_TELEMETRY_DISABLED
 
 /// Save an HTML report to a user-chosen path via native Save As dialog.
 #[tauri::command]
