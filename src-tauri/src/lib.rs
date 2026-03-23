@@ -127,13 +127,13 @@ pub fn run() {
         })
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_notification::init())
+        // .plugin(tauri_plugin_notification::init()) // PHASE2_DISABLED
         .invoke_handler(tauri::generate_handler![
             // commands::get_gpu_stats,  // GPU_TELEMETRY_DISABLED
             commands::get_app_info,
             commands::save_report,
             // commands::get_gpu_history, // GPU_TELEMETRY_DISABLED
-            commands::show_notification
+            // commands::show_notification // PHASE2_DISABLED
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

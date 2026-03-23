@@ -117,6 +117,7 @@ pub async fn save_report(app: tauri::AppHandle, html: String) -> Result<String, 
     }
 }
 
+/* PHASE2_DISABLED — uncomment to re-enable toast notifications
 /// Show a native Windows toast notification.
 #[tauri::command]
 pub fn show_notification(app: tauri::AppHandle, title: String, body: String) -> Result<(), String> {
@@ -128,6 +129,7 @@ pub fn show_notification(app: tauri::AppHandle, title: String, body: String) -> 
         .show()
         .map_err(|e| e.to_string())
 }
+*/ // end PHASE2_DISABLED
 
 #[derive(serde::Serialize)]
 pub struct AppInfo {

@@ -90,10 +90,11 @@ export default function App() {
       if (result && metricsB) {
         const reg = detectRegression(result.metrics, metricsB);
         setRegression(reg);
-        if (reg.isRegressed && typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
-          const { invoke } = await import('@tauri-apps/api/core');
-          invoke('show_notification', { title: 'Regression Detected', body: reg.summary }).catch(() => {});
-        }
+        // PHASE2_DISABLED: toast notification on regression
+        // if (reg.isRegressed && typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+        //   const { invoke } = await import('@tauri-apps/api/core');
+        //   invoke('show_notification', { title: 'Regression Detected', body: reg.summary }).catch(() => {});
+        // }
       }
     },
     [processDriver, metricsB]
@@ -113,10 +114,11 @@ export default function App() {
       if (result && metricsA) {
         const reg = detectRegression(metricsA, result.metrics);
         setRegression(reg);
-        if (reg.isRegressed && typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
-          const { invoke } = await import('@tauri-apps/api/core');
-          invoke('show_notification', { title: 'Regression Detected', body: reg.summary }).catch(() => {});
-        }
+        // PHASE2_DISABLED: toast notification on regression
+        // if (reg.isRegressed && typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+        //   const { invoke } = await import('@tauri-apps/api/core');
+        //   invoke('show_notification', { title: 'Regression Detected', body: reg.summary }).catch(() => {});
+        // }
       }
     },
     [processDriver, metricsA]
