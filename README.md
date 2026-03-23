@@ -2,7 +2,7 @@
 
 GPU driver benchmarking and frame time telemetry analysis tool for detecting frame pacing instability, stutter events, and performance regressions between driver builds.
 
-Supports native NVIDIA FrameView CSV exports and generic frame time formats. Ships as a **Windows desktop app** (Tauri v2, 3.5 MB installer) and a **PWA** with offline support.
+Supports native NVIDIA FrameView CSV exports and generic frame time formats. Ships as a **Windows desktop app** (Tauri v2, ~3.5 MB installer) and a **PWA** with offline support.
 
 ## Dashboard Demo
 
@@ -24,7 +24,7 @@ https://vinodh-framebench-analyzer.bolt.host
 
 - [Node.js](https://nodejs.org/) 18+
 - [Rust](https://rustup.rs/) — desktop app only
-- [Microsoft WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) — pre-installed on Windows 11; auto-downloaded on Windows 10 if missing
+- Windows 10 1803+ or Windows 11 — WebView2 is pre-installed via Edge; the setup installer bundles a bootstrapper for older machines
 
 ### Web / PWA
 
@@ -57,7 +57,7 @@ src-tauri/target/release/bundle/nsis/FrameBench Analyzer_1.0.0_x64-setup.exe
 
 **Run without installing:**
 ```bash
-./src-tauri/target/release/app.exe
+./src-tauri/target/release/FrameBench Analyzer.exe
 ```
 
 ---
@@ -67,6 +67,8 @@ src-tauri/target/release/bundle/nsis/FrameBench Analyzer_1.0.0_x64-setup.exe
 FrameBench Analyzer processes frame time telemetry from gameplay benchmarks and produces detailed performance analysis including regression detection, QA scoring, anomaly classification, and exportable HTML reports.
 
 Runs as a native Windows desktop app (Rust/Tauri v2 backend) or as a browser PWA. Desktop-only features — live GPU monitoring, system tray, native save dialog, toast notifications — are available exclusively in the desktop build.
+
+All analysis is performed locally. No cloud services or external databases are required.
 
 ---
 
@@ -84,7 +86,7 @@ Z-score based spike detection classifies frame time anomalies as High / Medium /
 Automatically flags regressions when: FPS drops more than 3%, frame time variance increases more than 20%, or stutter score increases more than 2 points versus the baseline driver.
 
 **Large File Processing**
-CSVs up to 50,000 rows processed via a Web Worker to avoid UI blocking. Files above 25,000 frames are noted as truncated; full frame counts are preserved in metadata.
+CSVs up to 50,000 rows processed via a Web Worker to avoid UI blocking. Files above 25,000 frames show a truncation notice; all frame statistics are computed from the full dataset.
 
 **Multi-Format CSV Ingestion**
 Accepts FrameView exports (`MsBetweenPresents`, `MsBetweenDisplayChange`), PresentMon (`FrameTime`), and generic frame time CSVs. Compressed `.csv.gz` files supported. `NA` values and extra columns handled gracefully.
@@ -126,10 +128,7 @@ Real-time GPU stats via `nvidia-smi` polled every 3 seconds. Displays:
 - Memory Clock MHz
 - Performance State (P0–P8)
 
-Falls back to simulated display values gracefully when no NVIDIA GPU is present.
-
-**Rolling GPU Telemetry Chart** *(Tauri only)*
-6-minute rolling time-series chart of GPU temperature, utilization, power draw, and core clock. Sampled every 3 seconds (120 samples), rendered with dual Y-axes via Recharts. Appears automatically below the upload grid once data starts accumulating.
+Falls back to simulated display values gracefully when no NVIDIA GPU is present or when running in the browser/PWA.
 
 **System Tray** *(Tauri only)*
 App minimizes to the Windows system tray. Tray icon tooltip shows live GPU temperature and power (`FrameBench Analyzer | GPU 72°C  245W`). Right-click menu provides Show / Hide and Quit.
@@ -143,15 +142,15 @@ A native toast notification fires when a performance regression is detected afte
 **Native File Picker** *(Tauri only)*
 CSV upload uses the OS file open dialog instead of the HTML file input.
 
+**Administrator Elevation** *(Tauri only)*
+If GPU stats are unavailable due to permissions, a one-click "Restart as Administrator" button relaunches the app with elevated privileges.
+
 ---
 
 ### Report & Persistence
 
 **HTML Report Export**
 Self-contained HTML performance report with dark NVIDIA-styled layout. Includes all metrics, QA analysis, anomaly breakdown, and regression verdict. Saved natively (desktop) or downloaded as a file (browser).
-
-**Supabase Persistence**
-Sessions and results are persisted to a Supabase database. Up to 10,000 frames per driver are sampled and stored for historical review.
 
 **PWA / Offline Support**
 Service worker provides cache-first offline capability when installed as a PWA. Disabled in the Tauri desktop context (not needed).
@@ -169,7 +168,6 @@ Service worker provides cache-first offline capability when installed as a PWA. 
 | Native dialogs | `tauri-plugin-dialog` |
 | Notifications | `tauri-plugin-notification` |
 | Installer | NSIS (Windows x64, ~3.5 MB) |
-| Database | Supabase (PostgreSQL + Row Level Security) |
 | PWA | Vite PWA plugin + service worker |
 
 ---
@@ -227,55 +225,8 @@ Queried live from `nvidia-smi` every 3 seconds:
 3. Open FrameBench Analyzer — upload the CSV; hardware metadata is auto-detected
 4. Upload a second CSV for the comparison driver
 5. Metrics, QA analysis, and regression verdict are computed automatically
-6. Download the HTML report (native Save As dialog on desktop) or save the session to Supabase
+6. Download the HTML report via the native Save As dialog (desktop) or browser download
 7. Use demo mode to explore the full workflow without real captures
-
----
-
-## Database Schema
-
-Data persisted to Supabase with Row Level Security. Anonymous users can read and write records from the last 24 hours.
-
-### `telemetry_sessions`
-
-| Column | Type | Description |
-|---|---|---|
-| `id` | uuid | Primary key |
-| `session_name` | text | Auto-generated label |
-| `driver_a_name` | text | Driver A filename |
-| `driver_b_name` | text | Driver B filename |
-| `gpu_name` | text | GPU model from FrameView CSV |
-| `cpu_name` | text | CPU model from FrameView CSV |
-| `resolution` | text | Render resolution from FrameView CSV |
-| `application` | text | Game/app name from FrameView CSV |
-| `csv_source` | text | `frameview` or `generic` |
-| `created_at` | timestamptz | Creation timestamp |
-
-### `frame_data`
-
-Sampled to 10,000 frames per driver before storage.
-
-| Column | Type | Description |
-|---|---|---|
-| `id` | uuid | Primary key |
-| `session_id` | uuid | FK to `telemetry_sessions` |
-| `driver_label` | text | `A` or `B` |
-| `frame_number` | integer | Sequential index |
-| `frame_time` | float8 | Frame duration in ms |
-| `created_at` | timestamptz | Creation timestamp |
-
-### `comparison_results`
-
-| Column | Type | Description |
-|---|---|---|
-| `id` | uuid | Primary key |
-| `session_id` | uuid | FK to `telemetry_sessions` |
-| `metrics_a` | jsonb | Computed metrics for Driver A |
-| `metrics_b` | jsonb | Computed metrics for Driver B |
-| `qa_analysis_a` | jsonb | QA anomaly analysis for Driver A |
-| `qa_analysis_b` | jsonb | QA anomaly analysis for Driver B |
-| `regression_result` | jsonb | Regression verdict and details |
-| `created_at` | timestamptz | Creation timestamp |
 
 ---
 
@@ -285,6 +236,7 @@ Sampled to 10,000 frames per driver before storage.
 - DLSS / image quality artifact detection
 - Automated benchmark ingestion pipeline
 - Multi-session trend analysis across driver versions
+- Rolling GPU telemetry history chart
 - ML-based frame pacing anomaly prediction
 
 ---
@@ -305,4 +257,4 @@ Vinodh Shekhar
 
 **[Karan Balaji](https://www.linkedin.com/in/karanbalaji/)** — Windows desktop app (Tauri v2)
 
-Migrated the app from Electron to Tauri v2 (Rust backend + WebView2), reducing the installer from ~200 MB to 3.5 MB. Added native Windows features: live GPU telemetry via `nvidia-smi`, rolling telemetry history chart, system tray with live GPU stats, native Save As dialog for reports, and Windows toast notifications on regression detection.
+Migrated the app from Electron to Tauri v2 (Rust backend + WebView2), reducing the installer from ~200 MB to 3.5 MB. Added native Windows features: live GPU telemetry via `nvidia-smi`, system tray with live GPU stats, native Save As dialog for reports, Windows toast notifications on regression detection, and administrator elevation for GPU access.
