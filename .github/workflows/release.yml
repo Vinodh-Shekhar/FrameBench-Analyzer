@@ -30,15 +30,45 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
-      - name: Build and publish Tauri release
-        uses: tauri-apps/tauri-action@v0
+      - name: Build Tauri app
+        run: npm run tauri:build
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+      - name: Generate latest.json for updater
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          $sigFile = Get-ChildItem "src-tauri/target/release/bundle/nsis/*.nsis.zip.sig" | Select-Object -First 1
+          $sig = (Get-Content $sigFile.FullName -Raw).Trim()
+          $zipName = $sigFile.Name.Replace('.sig', '')
+          $baseUrl = "https://github.com/Vinodh-Shekhar/FrameBench-Analyzer/releases/download/${{ github.ref_name }}"
+          $json = [ordered]@{
+            version  = $version
+            notes    = "See the release on GitHub for details."
+            pub_date = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+            platforms = [ordered]@{
+              "windows-x86_64" = [ordered]@{
+                signature = $sig
+                url       = "$baseUrl/$zipName"
+              }
+            }
+          } | ConvertTo-Json -Depth 5
+          $json | Set-Content "latest.json"
+          Write-Host "Generated latest.json:"
+          Get-Content "latest.json"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'FrameBench Analyzer ${{ github.ref_name }}'
-          releaseBody: 'See the assets below to download this version and install it.'
-          releaseDraft: true
-          prerelease: false
+          draft: true
+          name: FrameBench Analyzer ${{ github.ref_name }}
+          body: See the assets below to download this version and install it.
+          files: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/nsis/*.nsis.zip
+            src-tauri/target/release/bundle/nsis/*.nsis.zip.sig
+            latest.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
