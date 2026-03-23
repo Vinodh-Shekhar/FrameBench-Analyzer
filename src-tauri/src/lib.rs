@@ -1,7 +1,8 @@
 mod commands;
 pub use commands::*;
-use std::collections::VecDeque;
-use std::sync::{Arc, Mutex};
+// HISTORY_DISABLED:
+// use std::collections::VecDeque;
+// use std::sync::{Arc, Mutex};
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -47,22 +48,20 @@ pub fn run() {
                 })
                 .build(app)?;
 
+            app.manage(tray); // keep tray alive
+
+            /* HISTORY_DISABLED — uncomment to re-enable rolling telemetry chart
             // ── GPU history polling ───────────────────────────────────────
-            // Register the history buffer as managed state first
             let buf: Arc<Mutex<VecDeque<GpuSnapshot>>> =
                 Arc::new(Mutex::new(VecDeque::with_capacity(120)));
             app.manage(GpuHistoryState(buf.clone()));
-
-            // Clone tray handle so the polling task can update the tooltip
             let tray_for_task = tray.clone();
-            app.manage(tray); // keep tray alive
 
             tauri::async_runtime::spawn(async move {
                 loop {
                     use tokio::process::Command as TokioCommand;
                     use std::time::{SystemTime, UNIX_EPOCH};
 
-                    // 2-second timeout prevents nvidia-smi hangs from starving the thread pool
                     let result = tokio::time::timeout(
                         std::time::Duration::from_secs(2),
                         TokioCommand::new("nvidia-smi")
@@ -104,7 +103,6 @@ pub fn run() {
                                 }
                                 guard.push_back(snapshot);
 
-                                // Update tray tooltip with live GPU temp
                                 let _ = tray_for_task.set_tooltip(Some(&format!(
                                     "FrameBench Analyzer | GPU {}°C  {}W",
                                     temp as u32, power as u32
@@ -116,6 +114,7 @@ pub fn run() {
                     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
                 }
             });
+            */ // end HISTORY_DISABLED
 
             Ok(())
         })
@@ -126,7 +125,7 @@ pub fn run() {
             commands::get_gpu_stats,
             commands::get_app_info,
             commands::save_report,
-            commands::get_gpu_history,
+            // commands::get_gpu_history, // HISTORY_DISABLED
             commands::show_notification
         ])
         .run(tauri::generate_context!())

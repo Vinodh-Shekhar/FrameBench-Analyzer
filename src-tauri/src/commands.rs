@@ -1,6 +1,7 @@
 use std::process::Command as SysCommand;
-use std::collections::VecDeque;
-use std::sync::{Arc, Mutex};
+// HISTORY_DISABLED:
+// use std::collections::VecDeque;
+// use std::sync::{Arc, Mutex};
 
 #[derive(serde::Serialize, Clone)]
 pub struct GpuStats {
@@ -73,6 +74,7 @@ fn unavailable_stats() -> GpuStats {
     }
 }
 
+/* HISTORY_DISABLED — uncomment to re-enable rolling telemetry chart
 /// A single GPU telemetry snapshot stored in the rolling history buffer.
 #[derive(serde::Serialize, Clone)]
 pub struct GpuSnapshot {
@@ -91,6 +93,7 @@ pub struct GpuHistoryState(pub Arc<Mutex<VecDeque<GpuSnapshot>>>);
 pub fn get_gpu_history(state: tauri::State<GpuHistoryState>) -> Vec<GpuSnapshot> {
     state.0.lock().unwrap().iter().cloned().collect()
 }
+*/ // end HISTORY_DISABLED
 
 /// Save an HTML report to a user-chosen path via native Save As dialog.
 #[tauri::command]

@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import Header from './components/Header';
 import DriverUploadPanel from './components/DriverUploadPanel';
 import GpuStatusWidget from './components/GpuStatusWidget';
-import GpuTelemetryChart from './components/GpuTelemetryChart';
+// import GpuTelemetryChart from './components/GpuTelemetryChart'; // HISTORY_DISABLED
 import DemoCTA from './components/DemoCTA';
 import MetricsPanel from './components/MetricsPanel';
 import { SingleFrameTimeChart, ComparisonChart } from './components/FrameTimeChart';
@@ -199,7 +199,7 @@ export default function App() {
             <GpuStatusWidget hasData={hasData} />
           </div>
 
-          {isTauri && <GpuTelemetryChart />}
+          {/* {isTauri && <GpuTelemetryChart />} HISTORY_DISABLED */}
 
           {!hasData && <DemoCTA onGenerate={handleGenerateSample} />}
 
