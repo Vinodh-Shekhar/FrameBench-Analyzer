@@ -126,7 +126,8 @@ pub fn run() {
             commands::get_app_info,
             commands::save_report,
             // commands::get_gpu_history, // HISTORY_DISABLED
-            commands::show_notification
+            commands::show_notification,
+            commands::relaunch_as_admin
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

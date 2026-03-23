@@ -1,5 +1,5 @@
-import { Fan, Thermometer, Zap, MemoryStick, Activity, Cpu } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Fan, Thermometer, Zap, MemoryStick, Activity, Cpu, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import DualFanGpu from './DualFanGpu';
 
 interface Props {
@@ -107,6 +107,11 @@ export default function GpuStatusWidget({ hasData }: Props) {
 
   const gpuName = useReal ? gpuStats!.name : null;
 
+  const handleRestartAsAdmin = useCallback(async () => {
+    const { invoke } = await import('@tauri-apps/api/core');
+    invoke('relaunch_as_admin').catch(() => {});
+  }, []);
+
   return (
     <div className="rounded-lg border border-nvidia-border bg-nvidia-panel p-4">
       <div className="mb-3 flex items-center gap-2">
@@ -199,6 +204,23 @@ export default function GpuStatusWidget({ hasData }: Props) {
           </div>
         </div>
       </div>
+
+      {isTauri && gpuStats !== null && !gpuStats.available && (
+        <div className="mt-2 rounded bg-nvidia-warning/5 ring-1 ring-nvidia-warning/20 px-2.5 py-2">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <AlertTriangle className="h-3 w-3 shrink-0 text-nvidia-warning" />
+            <span className="font-mono text-[9px] text-nvidia-muted leading-tight">
+              GPU stats require administrator access
+            </span>
+          </div>
+          <button
+            onClick={handleRestartAsAdmin}
+            className="w-full rounded border border-nvidia-warning/30 bg-nvidia-warning/10 px-2 py-1 font-mono text-[9px] text-nvidia-warning transition-all hover:bg-nvidia-warning/20 active:scale-95"
+          >
+            Restart as Administrator →
+          </button>
+        </div>
+      )}
     </div>
   );
 }

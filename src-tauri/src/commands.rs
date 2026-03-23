@@ -135,6 +135,25 @@ pub fn show_notification(app: tauri::AppHandle, title: String, body: String) -> 
         .map_err(|e| e.to_string())
 }
 
+/// Relaunch the app with administrator privileges via Windows UAC.
+/// Spawns a new elevated instance via PowerShell Start-Process -Verb RunAs,
+/// then exits the current instance. If the user denies UAC, the app closes.
+#[tauri::command]
+pub fn relaunch_as_admin(app: tauri::AppHandle) -> Result<(), String> {
+    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    std::process::Command::new("powershell")
+        .args([
+            "-WindowStyle",
+            "Hidden",
+            "-Command",
+            &format!("Start-Process '{}' -Verb RunAs", exe.display()),
+        ])
+        .spawn()
+        .map_err(|e| e.to_string())?;
+    app.exit(0);
+    Ok(())
+}
+
 #[derive(serde::Serialize)]
 pub struct AppInfo {
     pub version: String,
