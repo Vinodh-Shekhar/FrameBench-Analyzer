@@ -8,14 +8,14 @@ use tauri::Manager;
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
-            if cfg!(debug_assertions) {
+            #[cfg(debug_assertions)]
+            {
                 app.handle().plugin(
                     tauri_plugin_log::Builder::default()
                         .level(log::LevelFilter::Info)
                         .build(),
                 )?;
                 // Auto-open devtools panel for inspection
-                #[cfg(debug_assertions)]
                 if let Some(win) = app.get_webview_window("main") {
                     let _ = win.open_devtools();
                 }

@@ -119,4 +119,4 @@ Before any `tauri build`, verify:
 ## Windows Release Requirements
 
 - Static CRT linking is configured in `src-tauri/.cargo/config.toml` — do not remove it. Without it, the release binary requires `vcruntime140.dll` to be installed on the target machine, which may be absent on clean Windows installs.
-- `webviewInstallMode` is set to `"skip"` — do not change it to `"downloadBootstrapper"`. The bootstrapper blocks the UI thread while downloading WebView2 and causes "not responding" on machines with firewalls or slow connections.
+- `webviewInstallMode` must be `"embedBootstrapper"` — do NOT use `"downloadBootstrapper"` or `"skip"`. `embedBootstrapper` bundles the small WebView2 bootstrapper (~1.7 MB) inside the NSIS setup.exe and installs it at setup time (not at app launch). `downloadBootstrapper` causes "not responding" because it downloads at app launch time, blocking the UI thread. `skip` leaves users with no WebView2 and a blank window if they're on an older Windows 10 without Edge.
