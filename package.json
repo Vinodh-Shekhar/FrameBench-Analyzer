@@ -15,6 +15,7 @@
     "tauri:build:dir": "tauri build --no-bundle"
   },
   "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.2.8",
     "@tauri-apps/api": "^2.10.1",
     "@tauri-apps/plugin-dialog": "^2.6.0",
     "@tauri-apps/plugin-fs": "^2.4.5",

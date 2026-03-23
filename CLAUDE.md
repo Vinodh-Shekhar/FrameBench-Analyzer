@@ -113,3 +113,10 @@ Before any `tauri build`, verify:
 - No cloud/database dependencies (Supabase, Firebase, etc.) — this is a local desktop tool
 - No service workers in the Tauri build path (already gated in `src/main.tsx`)
 - No hardcoded localhost URLs in frontend code — they break in release where there is no dev server
+- **No external CDN font imports** (`@import url('https://fonts.googleapis.com/...')`) — WebView2 blocks rendering until the CDN responds; on machines with firewalls or no internet this causes "not responding". Always self-host fonts via `@fontsource/<font-name>` and import the weight CSS files in `src/main.tsx`.
+- **No external URLs in `index.html` meta tags** — they fire network requests on every launch and expose scaffolding tool origins (bolt.new, etc.)
+
+## Windows Release Requirements
+
+- Static CRT linking is configured in `src-tauri/.cargo/config.toml` — do not remove it. Without it, the release binary requires `vcruntime140.dll` to be installed on the target machine, which may be absent on clean Windows installs.
+- `webviewInstallMode` is set to `"skip"` — do not change it to `"downloadBootstrapper"`. The bootstrapper blocks the UI thread while downloading WebView2 and causes "not responding" on machines with firewalls or slow connections.
