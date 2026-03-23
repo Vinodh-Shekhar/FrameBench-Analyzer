@@ -56,47 +56,50 @@ export default function GpuStatusWidget({ hasData }: Props) {
   // Derive display values: prefer real stats if available, otherwise use mock when hasData
   const useReal = isTauri && gpuStats?.available;
 
+  // Show demo mock values only in browser/PWA (not in Tauri where real GPU data is expected)
+  const showMock = !isTauri && hasData;
+
   const tempVal = useReal
     ? `${Math.round(gpuStats!.temperature)}°C`
-    : hasData ? '67°C' : '--';
+    : showMock ? '67°C' : '--';
   const tempBar = useReal
     ? Math.min(100, gpuStats!.temperature)
-    : hasData ? 67 : 0;
+    : showMock ? 67 : 0;
 
   const powerVal = useReal
     ? `${Math.round(gpuStats!.power_draw)}W`
-    : hasData ? '245W' : '--';
+    : showMock ? '245W' : '--';
   const powerMax = 400; // reasonable ceiling for bar scaling
   const powerBar = useReal
     ? Math.min(100, Math.round((gpuStats!.power_draw / powerMax) * 100))
-    : hasData ? 78 : 0;
+    : showMock ? 78 : 0;
 
   const vramVal = useReal
     ? `${(gpuStats!.vram_used_mb / 1024).toFixed(1)} GB`
-    : hasData ? '8.2 GB' : '--';
+    : showMock ? '8.2 GB' : '--';
   const vramBar = useReal && gpuStats!.vram_total_mb > 0
     ? Math.min(100, Math.round((gpuStats!.vram_used_mb / gpuStats!.vram_total_mb) * 100))
-    : hasData ? 68 : 0;
+    : showMock ? 68 : 0;
 
   const fanVal = useReal
     ? `${gpuStats!.fan_percent}%`
-    : hasData ? '55%' : '--';
+    : showMock ? '55%' : '--';
   const fanBar = useReal
     ? Math.min(100, gpuStats!.fan_percent)
-    : hasData ? 55 : 0;
+    : showMock ? 55 : 0;
 
-  const utilVal = useReal ? `${gpuStats!.gpu_utilization}%` : hasData ? '72%' : '--';
-  const utilBar = useReal ? gpuStats!.gpu_utilization : hasData ? 72 : 0;
+  const utilVal = useReal ? `${gpuStats!.gpu_utilization}%` : showMock ? '72%' : '--';
+  const utilBar = useReal ? gpuStats!.gpu_utilization : showMock ? 72 : 0;
 
-  const coreClkVal = useReal ? `${gpuStats!.core_clock_mhz} MHz` : hasData ? '2520 MHz' : '--';
+  const coreClkVal = useReal ? `${gpuStats!.core_clock_mhz} MHz` : showMock ? '2520 MHz' : '--';
   const coreClkBar = useReal
     ? Math.min(100, Math.round((gpuStats!.core_clock_mhz / 3000) * 100))
-    : hasData ? 84 : 0;
+    : showMock ? 84 : 0;
 
-  const memClkVal = useReal ? `${gpuStats!.mem_clock_mhz} MHz` : hasData ? '10251 MHz' : '--';
+  const memClkVal = useReal ? `${gpuStats!.mem_clock_mhz} MHz` : showMock ? '10251 MHz' : '--';
   const memClkBar = useReal
     ? Math.min(100, Math.round((gpuStats!.mem_clock_mhz / 12000) * 100))
-    : hasData ? 85 : 0;
+    : showMock ? 85 : 0;
 
   const pstateVal = useReal && gpuStats!.pstate && gpuStats!.pstate !== '[N/A]'
     ? gpuStats!.pstate

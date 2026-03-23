@@ -28,7 +28,7 @@ pub fn run() {
             let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show, &quit])?;
             let tray = TrayIconBuilder::new()
-                .icon(app.default_window_icon().unwrap().clone())
+                .icon(tauri::include_image!("icons/icon.ico"))
                 .tooltip("FrameBench Analyzer")
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id().as_ref() {
