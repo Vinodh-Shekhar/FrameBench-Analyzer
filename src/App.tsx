@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
 import Header from './components/Header';
 import DriverUploadPanel from './components/DriverUploadPanel';
-import GpuStatusWidget from './components/GpuStatusWidget';
-import GpuTelemetryChart from './components/GpuTelemetryChart';
+// GPU_TELEMETRY_DISABLED:
+// import GpuStatusWidget from './components/GpuStatusWidget';
+// import GpuTelemetryChart from './components/GpuTelemetryChart';
 import DemoCTA from './components/DemoCTA';
 import MetricsPanel from './components/MetricsPanel';
 import { SingleFrameTimeChart, ComparisonChart } from './components/FrameTimeChart';
@@ -196,10 +197,10 @@ export default function App() {
               onFileSelect={handleFileB}
               onClear={clearB}
             />
-            <GpuStatusWidget hasData={hasData} />
+            {/* <GpuStatusWidget hasData={hasData} /> GPU_TELEMETRY_DISABLED */}
           </div>
 
-          {isTauri && <GpuTelemetryChart />}
+          {/* {isTauri && <GpuTelemetryChart />} GPU_TELEMETRY_DISABLED */}
 
           {!hasData && <DemoCTA onGenerate={handleGenerateSample} />}
 
