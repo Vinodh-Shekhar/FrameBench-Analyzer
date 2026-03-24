@@ -14,7 +14,10 @@ const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
 
 if (!isTauri && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    const swUrl = `${import.meta.env.BASE_URL}sw.js`;
+    navigator.serviceWorker.register(swUrl).catch((err) => {
+      console.error('Service worker registration failed:', err);
+    });
   });
 }
 
