@@ -19,7 +19,7 @@ export default function DownloadSection() {
             <Button
               variant="primary"
               size="lg"
-              href="https://github.com/Vinodh-Shekhar/FrameBench-Analyzer/releases"
+              href="https://github.com/Vinodh-Shekhar/FrameBench-Analyzer/releases/latest/download/FrameBench-Analyzer-Setup.exe"
               target="_blank"
               rel="noopener noreferrer"
             >

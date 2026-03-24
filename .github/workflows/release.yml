@@ -59,6 +59,13 @@ jobs:
           Write-Host "Generated latest.json:"
           Get-Content "latest.json"
 
+      - name: Copy installer with stable filename
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem "src-tauri/target/release/bundle/nsis/*.exe" | Select-Object -First 1
+          Copy-Item $exe.FullName "FrameBench-Analyzer-Setup.exe"
+          Write-Host "Copied $($exe.Name) -> FrameBench-Analyzer-Setup.exe"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -66,7 +73,7 @@ jobs:
           name: FrameBench Analyzer ${{ github.ref_name }}
           body: See the assets below to download this version and install it.
           files: |
-            src-tauri/target/release/bundle/nsis/*.exe
+            FrameBench-Analyzer-Setup.exe
             src-tauri/target/release/bundle/nsis/*.nsis.zip
             src-tauri/target/release/bundle/nsis/*.nsis.zip.sig
             latest.json
