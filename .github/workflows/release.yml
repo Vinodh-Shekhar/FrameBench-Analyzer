@@ -70,104 +70,71 @@ jobs:
           Copy-Item $exe.FullName "FrameBench-Analyzer-Setup.exe"
           Write-Host "Copied $($exe.Name) -> FrameBench-Analyzer-Setup.exe"
 
-      - name: Set release notes
+      - name: Write release notes
         shell: pwsh
         run: |
           $tag = "${{ github.ref_name }}"
+          $v106 = "## v1.0.6 - Release Pipeline and Landing Page Overhaul`n`n" +
+            "### Bug Fixes`n" +
+            "- **Fixed broken download**: Release workflow now always uploads FrameBench-Analyzer-Setup.exe even when updater signing is unavailable. Previously the workflow crashed before uploading any files, causing a 404 on every download link.`n" +
+            "- **Fixed lint errors in AnimatedGraph**: Replaced ternary expression-statements with if/else blocks to satisfy @typescript-eslint/no-unused-expressions - CI was failing on every push.`n`n" +
+            "### Improvements`n" +
+            "- **New updater signing key**: Regenerated TAURI_SIGNING_PRIVATE_KEY and updated the public key in tauri.conf.json - auto-update checks will now work correctly for users on v1.0.6+`n" +
+            "- **Resilient release workflow**: Generate latest.json step now skips gracefully when no .sig file is found; added fail_on_unmatched_files: false so optional artifacts do not block the installer upload`n" +
+            "- **Redesigned landing page**: Full visual overhaul aligned with the app design system`n" +
+            "  - Sticky navbar with brand logo, section anchors, and download CTA`n" +
+            "  - Hero section with restructured headline, stats row, and GitHub link`n" +
+            "  - AnimatedGraph now renders dual waveforms - Driver A (green) vs Driver B (accent) with live metrics footer`n" +
+            "  - Download section: corrected download URL and version badge`n" +
+            "  - Footer: removed all placeholder links, now only real links (Release Notes, README, GitHub, Issues, License)`n" +
+            "- **Vercel deployment**: Added vercel.json to correctly configure the landing-page sub-app build and output directory`n" +
+            "- **MIT License**: Added LICENSE file to the repository`n`n" +
+            "### Auto-Update`n" +
+            "Users on v1.0.5 and below will see an in-app update prompt on next launch."
+          $v105 = "## v1.0.5 - Landing Page Launch and CI Fixes`n`n" +
+            "### New`n" +
+            "- Launched marketing landing page (landing-page/) built with React + Vite + Tailwind, deployed to GitHub Pages`n" +
+            "- Hero section with animated frame-time graph, feature highlights, and download CTA`n" +
+            "- Core Capabilities, Differentiation, Use Cases, Feature Deep Dive, Comparison Showcase, and Download sections`n" +
+            "- Updated CI workflow to run lint, typecheck, and Vite build on every push and PR`n`n" +
+            "### Bug Fixes`n" +
+            "- Fixed webviewInstallMode documentation contradiction - embedBootstrapper is the correct value`n" +
+            "- Removed stale Electron build job from CI"
+          $v104 = "## v1.0.4 - Direct Download and Landing Page Fixes`n`n" +
+            "### Improvements`n" +
+            "- Fixed download URL: installer now copied to stable filename FrameBench-Analyzer-Setup.exe uploaded as a release asset`n" +
+            "- Landing page download buttons use releases/latest/download/FrameBench-Analyzer-Setup.exe for a permanent version-independent link`n" +
+            "- Fixed landing page navigation section anchor IDs`n" +
+            "- Added target=_blank and rel=noopener noreferrer to all external links`n" +
+            "- Fixed analyzer app link to use relative path for GitHub Pages compatibility`n" +
+            "- Removed placeholder href=# links from footer`n" +
+            "- App footer now reads version dynamically via invoke('get_app_info') instead of hardcoding`n" +
+            "- Updated Node.js to lts/* in CI workflow"
+          $v103 = "## v1.0.3 - Release Pipeline Fix`n`n" +
+            "### Bug Fixes`n" +
+            "- Fixed release workflow: replaced broken tauri-action with explicit build + softprops release pipeline`n" +
+            "- Removed stale Electron build job that was causing CI confusion"
+          $v102 = "## v1.0.2 - Release Workflow Rebuild`n`n" +
+            "### Bug Fixes`n" +
+            "- Rebuilt release pipeline from scratch using manual npm run tauri:build + softprops/action-gh-release@v2`n" +
+            "- Updated footer credit`n`n" +
+            "### Internal`n" +
+            "- Version is now read dynamically from CARGO_PKG_VERSION via get_app_info Tauri command"
+          $v101 = "## v1.0.1 - Auto-Update System`n`n" +
+            "### New`n" +
+            "- In-app auto-update: added tauri-plugin-updater - app checks for new versions on launch and shows a non-blocking update banner`n" +
+            "- GitHub Actions release workflow: builds, signs, and creates a GitHub Release on every v* tag push; generates latest.json for the updater endpoint`n" +
+            "- Update banner UI: non-intrusive banner appears when a newer version is available with Update / Later actions"
           $notes = switch ($tag) {
-            "v1.0.6" {
-@"
-## v1.0.6 — Release Pipeline & Landing Page Overhaul
-
-### Bug Fixes
-- **Fixed broken download**: Release workflow now always uploads `FrameBench-Analyzer-Setup.exe` even when updater signing is unavailable — previously the workflow crashed before uploading any files, causing 404 on every download link
-- **Fixed lint errors in AnimatedGraph**: Replaced ternary expression-statements with `if/else` blocks to satisfy `@typescript-eslint/no-unused-expressions` — CI was failing on every push
-
-### Improvements
-- **New updater signing key**: Regenerated `TAURI_SIGNING_PRIVATE_KEY` and updated the public key in `tauri.conf.json` — auto-update checks will now work correctly for users on v1.0.6+
-- **Resilient release workflow**: `Generate latest.json` step now skips gracefully when no `.sig` file is found instead of crashing the entire pipeline; added `fail_on_unmatched_files: false` so optional artifacts (zip, sig, latest.json) don't block the installer upload
-- **Redesigned landing page**: Full visual overhaul aligned with the app's design system
-  - Added sticky navbar with brand logo, section anchors (Features, Use Cases, Download), and download CTA
-  - Hero section: restructured headline, stats row (2–3 driver builds, 16+ metrics, 0 cloud dependencies), GitHub link replacing placeholder demo link
-  - AnimatedGraph now renders dual waveforms — Driver A (green) vs Driver B (accent) — with a live metrics footer showing Avg FPS / Stutter / Score comparison
-  - Download section: corrected download URL to `releases/latest/download/FrameBench-Analyzer-Setup.exe`, added version badge and feature tiles
-  - Footer: removed all placeholder `#` links; now only contains real links — Release Notes, README, GitHub, Issues, License
-- **Vercel deployment**: Added `vercel.json` at repo root to correctly set build command and output directory for the `landing-page/` sub-app
-- **MIT License**: Added `LICENSE` file to the repository
-
-### Auto-Update
-Users on v1.0.5 and below will see an in-app update prompt on next launch.
-"@
-            }
-            "v1.0.5" {
-@"
-## v1.0.5 — Landing Page Launch & CI Fixes
-
-### New
-- **Landing page**: Launched marketing landing page (`landing-page/`) built with React + Vite + Tailwind, deployed to GitHub Pages
-  - Hero section with animated frame-time graph, feature highlights, and download CTA
-  - Core Capabilities, Differentiation, Use Cases, Feature Deep Dive, Comparison Showcase, and Download sections
-  - Sticky footer with navigation links
-- **CI pipeline**: Updated CI workflow to run lint, typecheck, and Vite build on every push and PR
-
-### Bug Fixes
-- Fixed `webviewInstallMode` documentation contradiction in CLAUDE.md — `embedBootstrapper` is the only correct value
-- Removed stale Electron build job from CI (release.yml handles all Windows builds)
-
-### Internal
-- Synced all pending uncommitted changes (landing page assets, config files, lock files)
-- Updated CLAUDE.md with auto-update system docs, release workflow docs, and landing page rules
-"@
-            }
-            "v1.0.4" {
-@"
-## v1.0.4 — Direct Download & Landing Page Fixes
-
-### Improvements
-- **Fixed download URL**: Installer is now copied to a stable filename `FrameBench-Analyzer-Setup.exe` and uploaded as a release asset — landing page download buttons now use `releases/latest/download/FrameBench-Analyzer-Setup.exe` for a permanent, version-independent link
-- **Landing page navigation**: Fixed section anchor IDs so navbar links scroll correctly to Features and Use Cases
-- **Landing page buttons**: Added `target="_blank"` and `rel="noopener noreferrer"` to all external links; fixed analyzer app link to use relative path (`analyzer/`) for GitHub Pages compatibility
-- **Removed dead footer links**: Eliminated placeholder `href="#"` links from the landing page footer
-- **Dynamic versioning**: App footer now reads version at runtime via `invoke('get_app_info')` instead of being hardcoded — version displayed always matches the actual binary
-- **CI**: Updated Node.js to `lts/*` in the CI workflow
-"@
-            }
-            "v1.0.3" {
-@"
-## v1.0.3 — Release Pipeline Fix
-
-### Bug Fixes
-- **Fixed release workflow**: Replaced broken `tauri-action` with an explicit `tauri build` + `softprops/action-gh-release` pipeline — previous releases were not producing downloadable artifacts
-- Removed stale Electron build job that was causing CI confusion
-"@
-            }
-            "v1.0.2" {
-@"
-## v1.0.2 — Release Workflow Rebuild
-
-### Bug Fixes
-- **Rebuilt release pipeline from scratch**: Switched from `tauri-action` to manual `npm run tauri:build` + `softprops/action-gh-release@v2` to reliably produce signed NSIS installers
-- Updated footer credit
-
-### Internal
-- Version is now read dynamically from `CARGO_PKG_VERSION` via `get_app_info` Tauri command
-"@
-            }
-            "v1.0.1" {
-@"
-## v1.0.1 — Auto-Update System
-
-### New
-- **In-app auto-update**: Added `tauri-plugin-updater` — app checks for new versions on launch and shows a non-blocking green banner with "Update" / "Later" actions
-- **GitHub Actions release workflow**: `.github/workflows/release.yml` now builds, signs, and creates a GitHub Release on every `v*` tag push; generates `latest.json` for the updater endpoint
-- **Update banner UI**: Non-intrusive banner appears at the top of the app when a newer version is available; clicking "Update" triggers download and install via the NSIS installer
-"@
-            }
-            default {
-              "See the assets below to download this version and install it."
-            }
+            "v1.0.6" { $v106 }
+            "v1.0.5" { $v105 }
+            "v1.0.4" { $v104 }
+            "v1.0.3" { $v103 }
+            "v1.0.2" { $v102 }
+            "v1.0.1" { $v101 }
+            default  { "See the assets below to download this version." }
           }
-          $notes | Set-Content "release_notes.md"
+          $notes | Set-Content "release_notes.md" -Encoding UTF8
           Write-Host "Release notes written for $tag"
 
       - name: Create GitHub Release
