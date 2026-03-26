@@ -7,9 +7,9 @@ export default function ComparisonShowcase() {
     <section className="py-32 relative overflow-hidden">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">Visual Performance Comparison</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">Instantly Compare Performance Across Configurations</h2>
           <p className="text-lg text-nvidia-muted font-mono max-w-2xl mx-auto">
-            See real performance data analyzed side-by-side
+            Frame time, FPS, variance, and stability metrics — all in one unified view
           </p>
         </div>
 
@@ -23,7 +23,7 @@ export default function ComparisonShowcase() {
                   : 'border border-nvidia-border/50 bg-nvidia-bg/40 text-nvidia-text hover:bg-nvidia-panel-light'
               }`}
             >
-              Stable Performance
+              Performance Metrics
             </button>
             <button
               onClick={() => setActiveTab('comparison')}

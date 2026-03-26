@@ -54,10 +54,10 @@ export default function UseCases() {
       title: 'Hardware Benchmarking',
       description: 'Compare GPU configurations and system performance.',
       points: [
-        'Compare GPU configurations',
-        'Analyze thermal performance',
-        'Track power impact',
-        'Generate benchmark reports',
+        'Compare GPU configurations side-by-side',
+        'Detect performance regressions per hardware',
+        'Analyze thermal and power impact',
+        'Generate shareable benchmark reports',
       ],
     },
     {
@@ -67,8 +67,8 @@ export default function UseCases() {
       points: [
         'Compare Ultra vs Competitive presets',
         'Find optimal quality/performance balance',
-        'Analyze per-setting impact',
-        'Share optimization results',
+        'Identify settings that introduce stutter or regressions',
+        'Share optimization reports in minutes',
       ],
     },
   ]
@@ -79,7 +79,7 @@ export default function UseCases() {
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Use Cases</h2>
           <p className="text-lg text-nvidia-muted font-mono max-w-2xl mx-auto">
-            FrameBench powers critical workflows across GPU driver validation, performance analysis, and benchmarking teams
+            FrameBench powers critical workflows across driver validation, hardware benchmarking, and game settings optimization
           </p>
         </div>
 

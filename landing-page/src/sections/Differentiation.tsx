@@ -1,4 +1,4 @@
-import { Zap, BarChart3, Cpu, Lightbulb } from 'lucide-react'
+import { Zap, BarChart3, Cpu, Lightbulb, WifiOff } from 'lucide-react'
 import FeatureCard from '../components/FeatureCard'
 
 export default function Differentiation() {
@@ -16,12 +16,17 @@ export default function Differentiation() {
     {
       icon: <Cpu size={28} />,
       title: 'Built for QA Workflows',
-      description: 'Designed using real-world GPU driver validation processes from major vendors',
+      description: 'Designed for driver validation, hardware comparison, and settings optimization workflows',
     },
     {
       icon: <Lightbulb size={28} />,
       title: 'Performance Scoring',
       description: 'Clear PASS/WARNING/FAIL verdicts with exportable reports for validation teams',
+    },
+    {
+      icon: <WifiOff size={28} />,
+      title: 'No External Dependencies',
+      description: 'Runs entirely locally with no telemetry upload or cloud processing',
     },
   ]
 
@@ -36,13 +41,13 @@ export default function Differentiation() {
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">What Makes FrameBench Different</h2>
           <p className="text-lg text-nvidia-muted font-mono max-w-2xl mx-auto">
-            Engineered for precise GPU performance validation and frame-time intelligence
+            Purpose-built for modern GPU validation and performance analysis workflows
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {features.map((feature, idx) => (
-            <div key={idx} data-animate>
+            <div key={idx} data-animate className={features.length % 2 !== 0 && idx === features.length - 1 ? 'md:col-span-2 md:max-w-md md:mx-auto' : ''}>
               <FeatureCard {...feature} />
             </div>
           ))}

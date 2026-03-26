@@ -1,13 +1,10 @@
-import { Download, Github } from 'lucide-react'
+import { Download } from 'lucide-react'
 import AnimatedGraph from '../components/AnimatedGraph'
 
-const DOWNLOAD_URL =
-  'https://github.com/Vinodh-Shekhar/FrameBench-Analyzer/releases/latest/download/FrameBench-Analyzer-Setup.exe'
-const GITHUB_URL = 'https://github.com/Vinodh-Shekhar/FrameBench-Analyzer'
 
 export default function Hero() {
   return (
-    <section className="relative pt-32 pb-20 overflow-hidden">
+    <section className="relative pt-28 pb-16 overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-b from-nvidia-green/5 via-transparent to-transparent"></div>
@@ -23,7 +20,7 @@ export default function Hero() {
             {/* Version badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-nvidia-green/40 bg-nvidia-green/10 font-mono text-[11px] font-semibold text-nvidia-green">
               <span className="w-2 h-2 rounded-full bg-nvidia-green animate-pulse"></span>
-              v1.0.6 — Free for Windows
+              GPU Performance Intelligence
             </div>
 
             {/* Headline */}
@@ -35,16 +32,19 @@ export default function Hero() {
                 </span>
               </h1>
               <p className="text-base text-nvidia-muted leading-relaxed font-mono">
-                Analyze frame-time telemetry, detect stutter, and validate GPU driver performance with precision. Detect regressions and generate shareable reports — in minutes.
+                Analyze frame-time telemetry, detect stutter, and validate performance across drivers, hardware, and game settings. Identify regressions and generate shareable reports in minutes, not hours
+              </p>
+              <p className="text-sm text-nvidia-accent/70 font-mono mt-3">
+                Compare performance across drivers, GPUs, and game configurations.
               </p>
             </div>
 
             {/* Quick stats row */}
             <div className="flex flex-wrap gap-8 py-5 border-t border-b border-nvidia-border">
               {[
-                { value: '2–3', label: 'driver builds compared' },
-                { value: '16+', label: 'metrics tracked' },
-                { value: '0', label: 'cloud dependencies' },
+                { value: '2', label: 'Datasets Compared', sub: 'Side-by-side comparison' },
+                { value: '16+', label: 'Metrics Analyzed' },
+                { value: '0', label: 'Cloud Dependencies', sub: 'Runs locally' },
               ].map((stat, i) => (
                 <div key={i}>
                   <p className="font-mono text-2xl font-bold text-nvidia-green leading-none mb-1">
@@ -53,30 +53,22 @@ export default function Hero() {
                   <p className="font-mono text-[10px] uppercase tracking-wider text-nvidia-muted">
                     {stat.label}
                   </p>
+                  {stat.sub && (
+                    <p className="font-mono text-[10px] text-nvidia-accent/60 mt-0.5">{stat.sub}</p>
+                  )}
                 </div>
               ))}
             </div>
 
             {/* CTA buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <a
-                href={DOWNLOAD_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => document.getElementById('download-section')?.scrollIntoView({ behavior: 'smooth' })}
                 className="shimmer-btn flex items-center justify-center gap-2 px-8 py-4 rounded border border-nvidia-green/50 bg-nvidia-green/10 text-nvidia-green font-mono text-base hover:bg-nvidia-green/20 transition-colors"
               >
                 <Download size={18} />
                 Download for Windows
-              </a>
-              <a
-                href={GITHUB_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 px-8 py-4 rounded border border-nvidia-border/50 bg-nvidia-bg/40 text-nvidia-text font-mono text-base hover:bg-nvidia-panel-light transition-colors"
-              >
-                <Github size={18} />
-                View on GitHub
-              </a>
+              </button>
             </div>
 
             <p className="font-mono text-[11px] text-nvidia-muted">
@@ -90,7 +82,7 @@ export default function Hero() {
               {/* Panel header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-nvidia-border">
                 <span className="font-mono text-[11px] text-nvidia-muted uppercase tracking-wider">
-                  Frame Time Analysis — Live Preview
+                  Live Frame-Time Visualization
                 </span>
                 <div className="flex items-center gap-4">
                   <span className="flex items-center gap-1.5 font-mono text-[10px] text-nvidia-green">

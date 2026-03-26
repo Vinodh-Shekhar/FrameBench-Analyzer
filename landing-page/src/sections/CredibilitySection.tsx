@@ -41,7 +41,7 @@ export default function CredibilitySection() {
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Built for Performance Engineers</h2>
           <p className="text-lg text-nvidia-muted font-mono max-w-2xl mx-auto">
-            FrameBench is developed with the rigor and precision demanded by professional GPU validation teams
+            Designed for engineers working on GPU validation, driver development, and performance optimization
           </p>
         </div>
 
@@ -55,9 +55,9 @@ export default function CredibilitySection() {
           <h3 className="text-2xl font-bold mb-6">Why Performance Engineers Choose FrameBench</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
-              'Built using real-world GPU performance validation workflows',
+              'Built from real-world driver, hardware, and settings validation workflows',
               'Detects anomalies that FPS alone cannot reveal',
-              'Exportable reports for compliance and stakeholder communication',
+              'Shareable HTML reports ready in minutes, not hours',
               'Handles complex, multi-dataset analysis workflows',
               'Regression detection for continuous validation pipelines',
               'Lightweight, runs on any Windows system',

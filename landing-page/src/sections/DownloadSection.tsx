@@ -23,8 +23,19 @@ export default function DownloadSection() {
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Download FrameBench Analyzer
           </h2>
-          <p className="text-base text-nvidia-muted font-mono mb-10 max-w-xl mx-auto">
-            Free desktop app for Windows. Zero cloud. Full control. Analyze frame-time telemetry in minutes.
+          <p className="text-base text-nvidia-muted font-mono mb-6 max-w-xl mx-auto">
+            Free desktop app for Windows. Zero cloud. Full control. Validate performance across drivers, hardware, and game settings — in minutes, not hours.
+          </p>
+
+          <div className="flex flex-wrap justify-center items-center gap-2 mb-4 font-mono text-xs text-nvidia-muted">
+            <span>No telemetry</span>
+            <span className="text-nvidia-border">•</span>
+            <span>No cloud processing</span>
+            <span className="text-nvidia-border">•</span>
+            <span>Runs locally</span>
+          </div>
+          <p className="font-mono text-xs text-nvidia-muted/70 mb-8">
+            Compatible with NVIDIA, AMD, and Intel GPUs
           </p>
 
           <a

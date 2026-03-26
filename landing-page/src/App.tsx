@@ -8,6 +8,7 @@ import FeatureDeepDive from './sections/FeatureDeepDive'
 import ComparisonShowcase from './sections/ComparisonShowcase'
 import CredibilitySection from './sections/CredibilitySection'
 import DownloadSection from './sections/DownloadSection'
+import HowItWorks from './sections/HowItWorks'
 import Footer from './sections/Footer'
 
 export default function App() {
@@ -31,13 +32,14 @@ export default function App() {
     <div className="w-full bg-nvidia-bg text-nvidia-text overflow-x-hidden">
       <Navbar />
       <Hero />
+      <ComparisonShowcase />
       <CoreCapabilities />
       <Differentiation />
       <UseCases />
       <FeatureDeepDive />
-      <ComparisonShowcase />
       <CredibilitySection />
       <DownloadSection />
+      <HowItWorks />
       <Footer />
     </div>
   )

@@ -8,7 +8,7 @@ export default function CoreCapabilities() {
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Core Capabilities</h2>
           <p className="text-lg text-nvidia-muted font-mono max-w-2xl mx-auto">
-            Professional-grade performance analysis tools built for GPU driver validation and performance engineering
+            Professional-grade frame-time analysis across drivers, hardware configurations, and game settings
           </p>
         </div>
 
@@ -16,9 +16,9 @@ export default function CoreCapabilities() {
           <div data-animate>
             <StatCard
               icon={<TrendingUp size={32} />}
-              label="Driver Comparison"
-              value="2-3"
-              unit="builds simultaneously"
+              label="Multi-Scenario Comparison"
+              value="2"
+              unit="datasets compared"
               status="optimal"
             />
             <p className="mt-4 text-nvidia-muted text-sm font-mono">Side-by-side FPS, variance, and stutter analysis across driver versions</p>
@@ -27,7 +27,7 @@ export default function CoreCapabilities() {
           <div data-animate>
             <StatCard
               icon={<AlertTriangle size={32} />}
-              label="Regression Detection"
+              label="Automated Analysis"
               value="Auto"
               unit="detected"
               status="optimal"
@@ -38,7 +38,7 @@ export default function CoreCapabilities() {
           <div data-animate>
             <StatCard
               icon={<Award size={32} />}
-              label="QA Scoring"
+              label="Validation Scoring"
               value="0–100"
               unit="scale"
               status="optimal"

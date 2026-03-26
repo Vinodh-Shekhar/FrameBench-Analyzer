@@ -77,9 +77,9 @@ export default function FeatureDeepDive() {
       description: 'Shareable, professional performance reports',
       capabilities: [
         'Interactive charts in reports',
-        'Detailed statistics',
-        'Comparison exports',
-        'Custom branding options',
+        'Detailed per-metric statistics',
+        'Shareable in minutes — no setup required',
+        'Comparison exports across drivers, hardware, and settings',
       ],
     },
   ]

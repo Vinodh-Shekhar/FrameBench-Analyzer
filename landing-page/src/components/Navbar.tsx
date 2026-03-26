@@ -1,8 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Download, Menu, X } from 'lucide-react'
-
-const DOWNLOAD_URL =
-  'https://github.com/Vinodh-Shekhar/FrameBench-Analyzer/releases/latest/download/FrameBench-Analyzer-Setup.exe'
+import { Menu, X } from 'lucide-react'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -32,7 +29,7 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <span className="w-2 h-2 rounded-full bg-nvidia-green animate-pulse-glow flex-shrink-0"></span>
-            <span className="font-mono font-bold text-nvidia-text">
+            <span className="font-mono font-bold text-nvidia-text" style={{ fontSize: '1.8rem' }}>
               Frame<span className="text-nvidia-green">Bench</span>
             </span>
           </div>
@@ -52,25 +49,18 @@ export default function Navbar() {
               Use Cases
             </button>
             <button
+              onClick={() => scrollTo('how-it-works')}
+              className="hover:text-nvidia-green transition-colors"
+            >
+              How It Works
+            </button>
+            <button
               onClick={() => scrollTo('download-section')}
               className="hover:text-nvidia-green transition-colors"
             >
               Download
             </button>
           </nav>
-
-          {/* CTA */}
-          <div className="hidden md:flex items-center">
-            <a
-              href={DOWNLOAD_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shimmer-btn flex items-center gap-2 px-4 py-2 rounded border border-nvidia-green/50 bg-nvidia-green/10 text-nvidia-green font-mono text-sm hover:bg-nvidia-green/20 transition-colors"
-            >
-              <Download size={14} />
-              Download
-            </a>
-          </div>
 
           {/* Mobile menu toggle */}
           <button
@@ -98,23 +88,18 @@ export default function Navbar() {
               Use Cases
             </button>
             <button
+              onClick={() => scrollTo('how-it-works')}
+              className="block w-full text-left px-4 py-3 text-nvidia-muted hover:text-nvidia-green transition-colors"
+            >
+              How It Works
+            </button>
+            <button
               onClick={() => scrollTo('download-section')}
               className="block w-full text-left px-4 py-3 text-nvidia-muted hover:text-nvidia-green transition-colors"
             >
               Download
             </button>
-            <div className="px-4 pt-3">
-              <a
-                href={DOWNLOAD_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shimmer-btn flex items-center justify-center gap-2 w-full py-3 rounded border border-nvidia-green/50 bg-nvidia-green/10 text-nvidia-green hover:bg-nvidia-green/20 transition-colors"
-              >
-                <Download size={14} />
-                Download for Windows
-              </a>
-            </div>
-          </div>
+</div>
         )}
       </div>
     </header>
