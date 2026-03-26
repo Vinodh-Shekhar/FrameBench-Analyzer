@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/FrameBench/', // 👈 THIS IS THE FIX
+  base: '/', // ✅ correct for Vercel
 })
