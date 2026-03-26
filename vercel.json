@@ -1,6 +1,4 @@
 {
-  "installCommand": "cd landing-page && npm install",
-  "buildCommand": "cd landing-page && npm run build",
-  "outputDirectory": "landing-page/dist",
-  "framework": null
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist"
 }
