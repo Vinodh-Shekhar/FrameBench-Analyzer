@@ -1,7 +1,7 @@
 import { Download, Package, Zap, WifiOff } from 'lucide-react'
 
 const DOWNLOAD_URL =
-  'https://github.com/Vinodh-Shekhar/FrameBench-Analyzer/releases/latest/download/FrameBench-Analyzer-Setup.exe'
+  'https://github.com/user-attachments/files/26275631/FrameBench.Analyzer_1.0.7_x64-setup.zip'
 
 export default function DownloadSection() {
   return (
