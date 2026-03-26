@@ -43,16 +43,16 @@ export default function Navbar() {
               Features
             </button>
             <button
-              onClick={() => scrollTo('use-cases')}
-              className="hover:text-nvidia-green transition-colors"
-            >
-              Use Cases
-            </button>
-            <button
               onClick={() => scrollTo('how-it-works')}
               className="hover:text-nvidia-green transition-colors"
             >
               How It Works
+            </button>
+            <button
+              onClick={() => scrollTo('use-cases')}
+              className="hover:text-nvidia-green transition-colors"
+            >
+              Use Cases
             </button>
             <button
               onClick={() => scrollTo('download-section')}
@@ -82,16 +82,16 @@ export default function Navbar() {
               Features
             </button>
             <button
-              onClick={() => scrollTo('use-cases')}
-              className="block w-full text-left px-4 py-3 text-nvidia-muted hover:text-nvidia-green transition-colors"
-            >
-              Use Cases
-            </button>
-            <button
               onClick={() => scrollTo('how-it-works')}
               className="block w-full text-left px-4 py-3 text-nvidia-muted hover:text-nvidia-green transition-colors"
             >
               How It Works
+            </button>
+            <button
+              onClick={() => scrollTo('use-cases')}
+              className="block w-full text-left px-4 py-3 text-nvidia-muted hover:text-nvidia-green transition-colors"
+            >
+              Use Cases
             </button>
             <button
               onClick={() => scrollTo('download-section')}
@@ -99,7 +99,7 @@ export default function Navbar() {
             >
               Download
             </button>
-</div>
+          </div>
         )}
       </div>
     </header>

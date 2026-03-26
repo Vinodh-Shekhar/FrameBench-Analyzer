@@ -34,12 +34,12 @@ export default function App() {
       <Hero />
       <ComparisonShowcase />
       <CoreCapabilities />
+      <HowItWorks />
       <Differentiation />
       <UseCases />
       <FeatureDeepDive />
       <CredibilitySection />
       <DownloadSection />
-      <HowItWorks />
       <Footer />
     </div>
   )
