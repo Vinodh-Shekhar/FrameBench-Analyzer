@@ -34,17 +34,14 @@ export default function Hero() {
               <p className="text-base text-nvidia-muted leading-relaxed font-mono">
                 Analyze frame-time telemetry, detect stutter, and validate performance across drivers, hardware, and game settings. Identify regressions and generate shareable reports in minutes, not hours
               </p>
-              <p className="text-sm text-nvidia-accent/70 font-mono mt-3">
-                Compare performance across drivers, GPUs, and game configurations.
-              </p>
             </div>
 
             {/* Quick stats row */}
             <div className="flex flex-wrap gap-8 py-5 border-t border-b border-nvidia-border">
               {[
-                { value: '2', label: 'Datasets Compared', sub: 'Side-by-side comparison' },
+                { value: '2', label: 'Datasets Compared' },
                 { value: '16+', label: 'Metrics Analyzed' },
-                { value: '0', label: 'Cloud Dependencies', sub: 'Runs locally' },
+                { value: '0', label: 'Cloud Dependencies' },
               ].map((stat, i) => (
                 <div key={i}>
                   <p className="font-mono text-2xl font-bold text-nvidia-green leading-none mb-1">
@@ -53,9 +50,6 @@ export default function Hero() {
                   <p className="font-mono text-[10px] uppercase tracking-wider text-nvidia-muted">
                     {stat.label}
                   </p>
-                  {stat.sub && (
-                    <p className="font-mono text-[10px] text-nvidia-accent/60 mt-0.5">{stat.sub}</p>
-                  )}
                 </div>
               ))}
             </div>
