@@ -1,8 +1,8 @@
 # FrameBench Analyzer
 
-GPU driver benchmarking and frame time telemetry analysis tool for detecting frame pacing instability, stutter events, and performance regressions between driver builds.
+Analyze frame-time telemetry, detect stutter, and validate performance across drivers, hardware, and game settings. Identify regressions and generate shareable reports in minutes, not hours.
 
-Supports native NVIDIA FrameView CSV exports and generic frame time formats. Ships as a **Windows desktop app** (Tauri v2, ~3.5 MB installer) and a **PWA** with offline support.
+Supports native NVIDIA FrameView CSV exports and generic frame time formats. Ships as a **Windows desktop app** (Tauri v2, ~3.5 MB installer)
 
 ## Dashboard Demo
 
@@ -60,7 +60,7 @@ src-tauri/target/release/bundle/nsis/FrameBench Analyzer_1.0.0_x64-setup.exe
 
 FrameBench Analyzer processes frame time telemetry from gameplay benchmarks and produces detailed performance analysis including regression detection, QA scoring, anomaly classification, and exportable HTML reports.
 
-Runs as a native Windows desktop app (Rust/Tauri v2 backend) or as a browser PWA. Desktop-only features — live GPU monitoring, system tray, native save dialog, toast notifications — are available exclusively in the desktop build.
+FrameBench powers critical workflows across driver validation, hardware benchmarking, and game settings optimization.
 
 All analysis is performed locally. No cloud services or external databases are required.
 
