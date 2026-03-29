@@ -1,5 +1,6 @@
-import { Download } from 'lucide-react'
+import { Download, Github } from 'lucide-react'
 import AnimatedGraph from '../components/AnimatedGraph'
+import Button from '../components/Button'
 
 
 export default function Hero() {
@@ -56,13 +57,21 @@ export default function Hero() {
 
             {/* CTA buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <button
+              <Button
                 onClick={() => document.getElementById('download-section')?.scrollIntoView({ behavior: 'smooth' })}
-                className="shimmer-btn flex items-center justify-center gap-2 px-8 py-4 rounded border border-nvidia-green/50 bg-nvidia-green/10 text-nvidia-green font-mono text-base hover:bg-nvidia-green/20 transition-colors"
+                size="lg"
               >
                 <Download size={18} />
                 Download for Windows
-              </button>
+              </Button>
+              <Button
+                href="https://github.com/Vinodh-Shekhar/FrameBench-Analyzer/releases"
+                variant="secondary"
+                size="lg"
+              >
+                <Github size={18} />
+                View on GitHub
+              </Button>
             </div>
 
             <p className="font-mono text-[11px] text-nvidia-muted">
