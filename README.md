@@ -16,11 +16,11 @@ https://vinodh-framebench-analyzer.bolt.host
 
 Phase 1:
 
-![FrameBench Analyzer](public/screenshots/Phase 1 Architecture.png)
+![FrameBench Analyzer](public/screenshots/Phase-1-Architecture.png)
 
 Phase 2:
 
-![FrameBench Analyzer](public/screenshots/Phase 2 Architecture.png)
+![FrameBench Analyzer](public/screenshots/Phase-2-Architecture.png)
 
 ---
 
